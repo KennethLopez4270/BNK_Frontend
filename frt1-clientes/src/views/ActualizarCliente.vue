@@ -53,6 +53,7 @@
         <div class="botones">
           <button type="submit" class="btn-accion">Actualizar</button>
           <button type="button" @click="limpiarFormulario" class="btn-accion btn-cancelar">Cancelar</button>
+          <button type="button" @click="eliminarCliente" class="btn-accion btn-eliminar">Eliminar Cliente</button>
         </div>
       </form>
 
@@ -60,7 +61,7 @@
     </section>
 
     <footer class="footer">
-      © 2025 Gestión Premium. Todos los derechos reservados.
+      © 2025 Todos los derechos reservados. CodeCapibara.
     </footer>
   </div>
 </template>
@@ -118,6 +119,30 @@ const actualizarCliente = async () => {
     }, 2000)
   } catch (error) {
     mensaje.value = 'Error al actualizar el cliente'
+  }
+}
+
+const eliminarCliente = async () => {
+  if (!cliente.value) return
+
+  const confirmar = confirm('¿Estás seguro de que deseas eliminar este cliente? Esta acción no se puede deshacer.')
+
+  if (!confirmar) return
+
+  try {
+    const response = await fetch(`/api/clients/${cliente.value.id}`, {
+      method: 'DELETE'
+    })
+
+    if (!response.ok) throw new Error('Error al eliminar cliente')
+
+    mensaje.value = 'Cliente eliminado exitosamente'
+    setTimeout(() => {
+      limpiarFormulario()
+      router.push('/home')
+    }, 2000)
+  } catch (error) {
+    mensaje.value = 'Error al eliminar el cliente'
   }
 }
 
@@ -202,6 +227,7 @@ const limpiarFormulario = () => {
 .botones {
   display: flex;
   justify-content: center;
+  flex-wrap: wrap;
   gap: 20px;
   margin-top: 20px;
 }
@@ -229,6 +255,15 @@ const limpiarFormulario = () => {
 
 .btn-cancelar:hover {
   background-color: #444;
+}
+
+.btn-eliminar {
+  background-color: #d9534f;
+  box-shadow: 0 0 10px #d9534f;
+}
+
+.btn-eliminar:hover {
+  background-color: #c9302c;
 }
 
 .mensaje {
