@@ -131,7 +131,7 @@
       };
   
       // Enviar solicitud al endpoint POST /api/accounts usando fetch
-      const response = await fetch('http://localhost:8080/api/accounts', {
+      const response = await fetch('http://localhost:8082/api/accounts', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

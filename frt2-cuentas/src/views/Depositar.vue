@@ -119,7 +119,7 @@
     try {
       loading.value = true;
       error.value = null;
-      const response = await fetch('http://localhost:8080/api/accounts', {
+      const response = await fetch('http://localhost:8082/api/accounts', {
         method: 'GET',
         headers: {
           'Origin': 'http://localhost:5173', // Ajusta al origen de tu frontend
@@ -168,7 +168,7 @@
       loading.value = true;
       error.value = null;
       const response = await fetch(
-        `http://localhost:8080/api/accounts/${cuentaSeleccionada.value.id}/deposit?amount=${monto}`,
+        `http://localhost:8082/api/accounts/${cuentaSeleccionada.value.id}/deposit?amount=${monto}`,
         {
           method: 'PATCH',
           headers: {

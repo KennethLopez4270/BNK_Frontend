@@ -219,7 +219,7 @@
     try {
       loading.value = true;
       error.value = null;
-      const response = await fetch('http://localhost:8080/api/accounts', {
+      const response = await fetch('http://localhost:8082/api/accounts', {
         method: 'GET',
         headers: {
           'Origin': 'http://localhost:5173', // Ajusta al origen de tu frontend
@@ -265,7 +265,7 @@
         status: cuentaSeleccionada.value.status,
       };
   
-      const response = await fetch(`http://localhost:8080/api/accounts/${cuentaSeleccionada.value.id}`, {
+      const response = await fetch(`http://localhost:8082/api/accounts/${cuentaSeleccionada.value.id}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -306,7 +306,7 @@
     try {
       loading.value = true;
       error.value = null;
-      const response = await fetch(`http://localhost:8080/api/accounts/${cuentaSeleccionada.value.id}`, {
+      const response = await fetch(`http://localhost:8082/api/accounts/${cuentaSeleccionada.value.id}`, {
         method: 'DELETE',
         headers: {
           'Origin': 'http://localhost:5173',
