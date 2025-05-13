@@ -45,9 +45,7 @@
         <div class="form-group">
           <label for="documentType">Tipo de Documento</label>
           <select v-model="cliente.documentType" id="documentType" class="input-field">
-            <option value="DNI">DNI</option>
-            <option value="RUC">RUC</option>
-            <option value="CE">Carné de Extranjería</option>
+            <option value="CI">CI</option>
             <option value="PASAPORTE">Pasaporte</option>
           </select>
         </div>
