@@ -62,7 +62,8 @@
                   {{ ordenAscendente ? '↑' : '↓' }}
                 </span>
               </th>
-              <th>Acciones</th>
+              <!--
+              <th>Acciones</th>-->
             </tr>
           </thead>
           <tbody>
@@ -72,6 +73,7 @@
               <td>{{ cliente.phoneNumber }}</td>
               <td>{{ cliente.documentType }}</td>
               <td>{{ cliente.documentNumber }}</td>
+              <!--
               <td class="acciones">
                 <button 
                   @click="editarCliente(cliente.id)" 
@@ -85,7 +87,7 @@
                 >
                   Eliminar
                 </button>
-              </td>
+              </td> -->
             </tr>
             <tr v-if="clientesFiltrados.length === 0">
               <td colspan="6" class="sin-resultados">
