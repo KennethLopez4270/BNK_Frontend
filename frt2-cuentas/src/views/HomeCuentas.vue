@@ -1,27 +1,32 @@
 <template>
-  <div class="container py-5 animate__animated animate__fadeIn">
-    <div class="text-center mb-5">
-      <h1 class="display-4 fw-bold text-primary animate__animated animate__fadeInDown">Gestión de Cuentas</h1>
-      <p class="text-muted">Administra las cuentas de tus clientes de forma rápida y sencilla</p>
-    </div>
+  <div class="gestor-cuentas">
+    <section class="hero">
+      <h1 class="titulo">Gestión de Cuentas</h1>
+      <p class="descripcion">
+        Administra las cuentas de tus clientes de forma rápida y sencilla
+      </p>
+    </section>
 
-    <div class="row justify-content-center g-4">
-      <div class="col-md-4" v-for="boton in botones" :key="boton.label">
-        <div class="card shadow-lg h-100 border-0 animate__animated animate__zoomIn">
-          <div class="card-body d-flex flex-column justify-content-center align-items-center text-center">
-            <i :class="`bi ${boton.icon} fs-1 text-${boton.color} mb-3`"></i>
-            <h5 class="card-title">{{ boton.label }}</h5>
-            <button
-              class="btn btn-outline-primary mt-3"
-              :class="`btn-${boton.color}`"
-              @click="boton.action"
-            >
-              Ir
-            </button>
-          </div>
+    <section class="botones-grid">
+      <div 
+        v-for="boton in botones" 
+        :key="boton.label" 
+        class="card-accion"
+        @click="boton.action"
+      >
+        <div class="icono" :class="`bg-${boton.color}`">
+          <i :class="`bi ${boton.icon}`"></i>
         </div>
+        <h3>{{ boton.label }}</h3>
+        <button class="btn-accion">
+          Ir
+        </button>
       </div>
-    </div>
+    </section>
+
+    <footer class="footer">
+      © 2025 Gestión Premium. Todos los derechos reservados.
+    </footer>
   </div>
 </template>
 
@@ -48,5 +53,119 @@ const botones = [
 </script>
 
 <style scoped>
-@import "animate.css";
+.gestor-cuentas {
+  font-family: 'Segoe UI', sans-serif;
+  color: #fff;
+  background: linear-gradient(to bottom, #122523, #000);
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 20px;
+}
+
+.hero {
+  padding: 60px 20px 40px;
+  text-align: center;
+}
+
+.titulo {
+  font-size: 2.5rem;
+  font-weight: 800;
+  color: #3ded97;
+  margin-bottom: 15px;
+}
+
+.descripcion {
+  font-size: 1.2rem;
+  color: #ccc;
+}
+
+.botones-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 25px;
+  width: 100%;
+  max-width: 1000px;
+  padding: 40px 20px;
+}
+
+.card-accion {
+  background: rgba(0, 0, 0, 0.7);
+  border-radius: 15px;
+  padding: 30px 20px;
+  text-align: center;
+  cursor: pointer;
+  transition: transform 0.3s, box-shadow 0.3s;
+  border: 1px solid rgba(61, 237, 151, 0.1);
+}
+
+.card-accion:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 10px 20px rgba(61, 237, 151, 0.1);
+}
+
+.card-accion h3 {
+  margin: 20px 0;
+  color: #fff;
+  font-size: 1.2rem;
+}
+
+.icono {
+  width: 70px;
+  height: 70px;
+  margin: 0 auto;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.8rem;
+}
+
+.icono i {
+  color: white;
+}
+
+.bg-primary { background-color: #24d26a; box-shadow: 0 0 15px #24d26a; }
+.bg-danger { background-color: #ff4d4d; box-shadow: 0 0 15px #ff4d4d; }
+.bg-warning { background-color: #ffc107; box-shadow: 0 0 15px #ffc107; }
+.bg-success { background-color: #28a745; box-shadow: 0 0 15px #28a745; }
+.bg-info { background-color: #17a2b8; box-shadow: 0 0 15px #17a2b8; }
+.bg-secondary { background-color: #6c757d; box-shadow: 0 0 15px #6c757d; }
+
+.btn-accion {
+  background-color: #24d26a;
+  color: #fff;
+  padding: 10px 25px;
+  font-size: 1rem;
+  border: none;
+  border-radius: 30px;
+  cursor: pointer;
+  box-shadow: 0 0 10px #24d26a;
+  transition: 0.3s;
+}
+
+.btn-accion:hover {
+  background-color: #1abc5c;
+}
+
+.footer {
+  margin-top: auto;
+  padding: 30px 0;
+  font-size: 0.9rem;
+  color: #888;
+  text-align: center;
+}
+
+@media (max-width: 768px) {
+  .botones-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+@media (max-width: 480px) {
+  .botones-grid {
+    grid-template-columns: 1fr;
+  }
+}
 </style>
