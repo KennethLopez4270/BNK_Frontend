@@ -13,8 +13,7 @@
       <div class="botones">
         <button class="btn-accion" @click="irACrear">Registrar</button>
         <button class="btn-accion" @click="irAObtener">Consultar</button>
-        <button class="btn-accion" @click="irAActualizar">Modificar</button>
-        <button class="btn-accion" @click="irAEliminar">Eliminar</button>
+        <button class="btn-accion" @click="irAActualizar">Modificar y Eliminar</button>
       </div>
     </section>
 
