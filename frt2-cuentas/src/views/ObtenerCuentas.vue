@@ -134,6 +134,49 @@
             <span class="detalle-etiqueta">Última Extracción:</span>
             <span class="detalle-valor">{{ cuentaSeleccionada.lastWithdrawal || 'No disponible' }}</span>
           </div>
+          
+          <div class="detalle-item">
+            <span class="detalle-label">ID Cliente:</span>
+            <span class="detalle-valor">{{ cuentaSeleccionada.client_id }}</span>
+          </div>
+          
+          <div class="detalle-item">
+            <span class="detalle-label">Tipo de cuenta:</span>
+            <span class="detalle-valor">{{ cuentaSeleccionada.account_type }}</span>
+          </div>
+          
+          <div class="detalle-item">
+            <span class="detalle-label">Saldo:</span>
+            <span class="detalle-valor">${{ cuentaSeleccionada.balance.toFixed(2) }}</span>
+          </div>
+          
+          <div class="detalle-item">
+            <span class="detalle-label">Estado:</span>
+            <span :class="`estado ${cuentaSeleccionada.status}`">
+              {{ cuentaSeleccionada.status }}
+            </span>
+          </div>
+          
+          <div class="detalle-item">
+            <span class="detalle-label">Último Depósito:</span>
+            <span class="detalle-valor">{{ cuentaSeleccionada.last_deposit || 'No disponible' }}</span>
+          </div>
+          
+          <div class="detalle-item">
+            <span class="detalle-label">Fecha de Creación:</span>
+            <span class="detalle-valor">{{ cuentaSeleccionada.creation_date }}</span>
+          </div>
+          
+          <div class="detalle-item">
+            <span class="detalle-label">Última Extracción:</span>
+            <span class="detalle-valor">{{ cuentaSeleccionada.last_withdrawal || 'No disponible' }}</span>
+          </div>
+        </div>
+
+        <div class="modal-footer">
+          <button @click="mostrarModalDetalle = false" class="btn-accion">
+            Cerrar
+          </button>
         </div>
 
         <button @click="mostrarModalDetalle = false" class="btn-accion">

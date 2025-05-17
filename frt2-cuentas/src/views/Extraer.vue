@@ -71,6 +71,9 @@
               :max="cuentaSeleccionada.balance"
               required
             />
+            <div class="saldo-disponible">
+              Máximo disponible: ${{ cuentaSeleccionada.balance.toFixed(2) }}
+            </div>
           </div>
 
           <div class="botones-form">
