@@ -23,31 +23,30 @@
 
       <form v-else @submit.prevent="actualizarCliente" class="actualizar-form">
         <div class="form-group">
-          <label for="full_name">Nombre Completo</label>
-          <input v-model="cliente.full_name" type="text" id="full_name" class="input-field" required />
+          <label for="fullName">Nombre Completo</label>
+          <input v-model="cliente.fullName" type="text" id="fullName" class="input-field" required />
         </div>
         <div class="form-group">
           <label for="email">Correo Electrónico</label>
           <input v-model="cliente.email" type="email" id="email" class="input-field" required />
         </div>
         <div class="form-group">
-          <label for="phone_number">Teléfono</label>
-          <input v-model="cliente.phone_number" type="text" id="phone_number" class="input-field" />
+          <label for="phoneNumber">Teléfono</label>
+          <input v-model="cliente.phoneNumber" type="text" id="phoneNumber" class="input-field" />
         </div>
         <div class="form-group">
           <label for="address">Dirección</label>
           <textarea v-model="cliente.address" id="address" class="input-field" rows="4"></textarea>
         </div>
         <div class="form-group">
-          <label for="document_number">Número de Documento</label>
-          <input v-model="cliente.document_number" type="text" id="document_number" class="input-field" disabled />
+          <label for="documentNumber">Número de Documento</label>
+          <input v-model="cliente.documentNumber" type="text" id="documentNumber" class="input-field" disabled />
         </div>
         <div class="form-group">
-          <label for="document_type">Tipo de Documento</label>
-          <select v-model="cliente.document_type" id="document_type" class="input-field">
-            <option value="DNI">DNI</option>
-            <option value="Pasaporte">Pasaporte</option>
+          <label for="documentType">Tipo de Documento</label>
+          <select v-model="cliente.documentType" id="documentType" class="input-field">
             <option value="CI">CI</option>
+            <option value="PASAPORTE">Pasaporte</option>
           </select>
         </div>
         <div class="botones">
@@ -57,7 +56,9 @@
         </div>
       </form>
 
-      <p v-if="mensaje" class="mensaje">{{ mensaje }}</p>
+      <div v-if="mensaje" class="mensaje" :class="{ 'error': esError }">
+        {{ mensaje }}
+      </div>
     </section>
 
     <footer class="footer">
@@ -69,56 +70,75 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
+import axios from 'axios'
 
 const router = useRouter()
 const route = useRoute()
 const document_number = ref('')
 const cliente = ref(null)
 const mensaje = ref('')
+const esError = ref(false)
 
 onMounted(async () => {
-  if (route.params.document_number) {
-    document_number.value = route.params.document_number
-    await cargarCliente()
+  if (route.params.id) {
+    await cargarClientePorId(route.params.id)
   }
 })
 
+const cargarClientePorId = async (id) => {
+  try {
+    const response = await axios.get(`http://localhost:8081/api/clients/${id}`)
+    cliente.value = response.data
+    document_number.value = cliente.value.documentNumber
+    mensaje.value = ''
+    esError.value = false
+  } catch (error) {
+    manejarError(error, 'Error al cargar el cliente')
+  }
+}
+
 const cargarCliente = async () => {
   try {
-    const response = await fetch(`/api/clients?document_number=${document_number.value}`)
-    if (!response.ok) throw new Error('Cliente no encontrado')
-    const data = await response.json()
-    cliente.value = data
+    // Primero buscamos el cliente por número de documento
+    const response = await axios.get('http://localhost:8081/api/clients')
+    const clienteEncontrado = response.data.find(c => c.documentNumber === document_number.value)
+    
+    if (!clienteEncontrado) {
+      throw new Error('Cliente no encontrado')
+    }
+    
+    cliente.value = clienteEncontrado
     mensaje.value = ''
+    esError.value = false
   } catch (error) {
-    mensaje.value = 'Error: Cliente no encontrado'
-    cliente.value = null
+    manejarError(error, 'Cliente no encontrado')
   }
 }
 
 const actualizarCliente = async () => {
   try {
+    // Validación básica de email
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
     if (!emailRegex.test(cliente.value.email)) {
       mensaje.value = 'Correo electrónico inválido'
+      esError.value = true
       return
     }
 
-    const response = await fetch(`/api/clients/${cliente.value.id}`, {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(cliente.value),
-    })
+    const response = await axios.put(
+      `http://localhost:8081/api/clients/${cliente.value.id}`,
+      cliente.value
+    )
 
-    if (!response.ok) throw new Error('Error al actualizar')
     mensaje.value = 'Cliente actualizado exitosamente'
+    esError.value = false
 
     setTimeout(() => {
       limpiarFormulario()
-      router.push('/home')
+      router.push('/')
     }, 2000)
   } catch (error) {
-    mensaje.value = 'Error al actualizar el cliente'
+    manejarError(error, 'Error al actualizar el cliente')
   }
 }
 
@@ -130,19 +150,17 @@ const eliminarCliente = async () => {
   if (!confirmar) return
 
   try {
-    const response = await fetch(`/api/clients/${cliente.value.id}`, {
-      method: 'DELETE'
-    })
-
-    if (!response.ok) throw new Error('Error al eliminar cliente')
+    await axios.delete(`http://localhost:8081/api/clients/${cliente.value.id}`)
 
     mensaje.value = 'Cliente eliminado exitosamente'
+    esError.value = false
+
     setTimeout(() => {
       limpiarFormulario()
-      router.push('/home')
+      router.push('/')
     }, 2000)
   } catch (error) {
-    mensaje.value = 'Error al eliminar el cliente'
+    manejarError(error, 'Error al eliminar el cliente')
   }
 }
 
@@ -150,6 +168,23 @@ const limpiarFormulario = () => {
   cliente.value = null
   document_number.value = ''
   mensaje.value = ''
+  esError.value = false
+}
+
+const manejarError = (error, mensajeDefault) => {
+  esError.value = true
+  if (error.response) {
+    // Error del servidor
+    if (error.response.status === 404) {
+      mensaje.value = 'Cliente no encontrado'
+    } else if (error.response.status === 409) {
+      mensaje.value = 'Error: El email ya está registrado'
+    } else {
+      mensaje.value = `Error del servidor: ${error.response.data.message || error.response.statusText}`
+    }
+  } else {
+    mensaje.value = mensajeDefault
+  }
 }
 </script>
 
@@ -278,5 +313,18 @@ const limpiarFormulario = () => {
   font-size: 0.9rem;
   color: #888;
   text-align: center;
+}
+
+.mensaje {
+  margin-top: 20px;
+  padding: 15px;
+  border-radius: 8px;
+  text-align: center;
+  font-weight: 600;
+  background-color: #24d26a;
+}
+
+.mensaje.error {
+  background-color: #ff4d4d;
 }
 </style>

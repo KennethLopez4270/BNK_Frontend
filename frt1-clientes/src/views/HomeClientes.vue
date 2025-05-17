@@ -12,9 +12,8 @@
       <h2 class="subtitulo">Acciones del Sistema</h2>
       <div class="botones">
         <button class="btn-accion" @click="irACrear">Registrar</button>
-        <button class="btn-accion" @click="irAObtener">Consultar</button>
-        <button class="btn-accion" @click="irAActualizar">Modificar</button>
-        <button class="btn-accion" @click="irAEliminar">Eliminar</button>
+        <button class="btn-accion" @click="irAActualizar">Modificar y Eliminar</button>
+        <button class="btn-accion" @click="irAObtener">Obtener Clientes</button>
       </div>
     </section>
 
