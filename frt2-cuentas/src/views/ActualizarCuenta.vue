@@ -329,7 +329,7 @@
     }
   };
   
-  const volver = () => router.push('/accounts');
+  const volver = () => router.push('/');
   </script>
   
   <style scoped>
