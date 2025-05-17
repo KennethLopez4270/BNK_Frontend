@@ -12,19 +12,19 @@
         <div class="form-columnas">
           <div class="form-grupo">
             <label>ID del Cliente</label>
-            <input 
-              type="number" 
-              v-model="form.client_id" 
+            <input
+              type="number"
+              v-model="form.clientId"
               class="input-field"
               required
             />
           </div>
-          
+
           <div class="form-grupo">
             <label>Número de Cuenta</label>
-            <input 
-              type="text" 
-              v-model="form.account_number" 
+            <input
+              type="text"
+              v-model="form.accountNumber"
               class="input-field"
               required
             />
@@ -34,19 +34,19 @@
         <div class="form-columnas">
           <div class="form-grupo">
             <label>Tipo de Cuenta</label>
-            <select v-model="form.account_type" class="input-field">
+            <select v-model="form.accountType" class="input-field">
               <option value="ahorro">Ahorro</option>
               <option value="corriente">Corriente</option>
             </select>
           </div>
-          
+
           <div class="form-grupo">
             <label>Saldo Inicial</label>
-            <input 
-              type="number" 
-              v-model="form.balance" 
-              min="0" 
-              step="0.01" 
+            <input
+              type="number"
+              v-model="form.balance"
+              min="0"
+              step="0.01"
               class="input-field"
             />
           </div>
@@ -61,13 +61,14 @@
         </div>
 
         <div class="botones-form">
-          <button type="submit" class="btn-accion btn-guardar">
-            <i class="bi bi-check-circle"></i> Guardar Cuenta
+          <button type="submit" class="btn-accion btn-guardar" :disabled="loading">
+            <i class="bi bi-check-circle"></i> {{ loading ? 'Guardando...' : 'Guardar Cuenta' }}
           </button>
-          <button 
-            type="button" 
-            @click="volver" 
+          <button
+            type="button"
+            @click="volver"
             class="btn-accion btn-secundario"
+            :disabled="loading"
           >
             <i class="bi bi-arrow-left"></i> Volver
           </button>
@@ -76,24 +77,20 @@
     </section>
 
     <!-- Modal de éxito -->
-    <div v-if="mostrarModalExito" class="modal-overlay">
-      <div class="modal-contenido modal-exito">
+    <div v-if="mostrarModalExito" class="modal-overlay" @click="mostrarModalExito = false">
+      <div class="modal-contenido modal-exito" @click.stop>
         <h3>¡Éxito!</h3>
         <p>La cuenta fue creada correctamente.</p>
-        <button @click="mostrarModalExito = false" class="btn-accion">
-          Aceptar
-        </button>
+        <button @click="cerrarModalExito" class="btn-accion">Aceptar</button>
       </div>
     </div>
 
     <!-- Modal de error -->
-    <div v-if="mostrarModalError" class="modal-overlay">
-      <div class="modal-contenido modal-error">
+    <div v-if="mostrarModalError" class="modal-overlay" @click="mostrarModalError = false">
+      <div class="modal-contenido modal-error" @click.stop>
         <h3>Error</h3>
-        <p>Ocurrió un error al registrar la cuenta. Por favor, intenta nuevamente.</p>
-        <button @click="mostrarModalError = false" class="btn-accion">
-          Cerrar
-        </button>
+        <p>{{ errorMessage }}</p>
+        <button @click="mostrarModalError = false" class="btn-accion">Cerrar</button>
       </div>
     </div>
 
@@ -104,38 +101,72 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
-import { useRouter } from 'vue-router'
+import { ref } from 'vue';
+import { useRouter } from 'vue-router';
 
-const router = useRouter()
+const router = useRouter();
 
 const form = ref({
-  client_id: '',
-  account_number: '',
-  account_type: 'ahorro',
+  clientId: '',
+  accountNumber: '',
+  accountType: 'ahorro',
   balance: 0,
-  status: 'activo'
-})
+  status: 'activo',
+});
 
-const mostrarModalExito = ref(false)
-const mostrarModalError = ref(false)
+const mostrarModalExito = ref(false);
+const mostrarModalError = ref(false);
+const loading = ref(false);
+const errorMessage = ref('Ocurrió un error al registrar la cuenta. Por favor, intenta nuevamente.');
 
-const handleSubmit = () => {
+const handleSubmit = async () => {
   try {
-    // Simula una solicitud al backend
-    console.log('Enviando datos:', form.value)
-    
-    // Aquí conectarías tu backend real
-    // Si responde con éxito:
-    mostrarModalExito.value = true
+    loading.value = true;
+    const payload = {
+      clientId: parseInt(form.value.clientId),
+      accountNumber: form.value.accountNumber,
+      accountType: form.value.accountType,
+      balance: parseFloat(form.value.balance) || 0,
+      status: form.value.status,
+    };
+
+    // Enviar solicitud al endpoint POST /api/accounts usando fetch
+    const response = await fetch('http://localhost:8082/api/accounts', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Origin': 'http://localhost:5173', // Ajusta al origen de tu frontend
+      },
+      body: JSON.stringify(payload),
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.message || `Error ${response.status}`);
+    }
+
+    // Mostrar modal de éxito
+    mostrarModalExito.value = true;
   } catch (error) {
-    mostrarModalError.value = true
+    // Personalizar mensaje de error
+    errorMessage.value =
+      error.message.includes('400')
+        ? 'Datos inválidos. Verifica los campos e intenta nuevamente.'
+        : error.message || 'Error al registrar la cuenta. Por favor, intenta nuevamente.';
+    mostrarModalError.value = true;
+  } finally {
+    loading.value = false;
   }
-}
+};
+
+const cerrarModalExito = () => {
+  mostrarModalExito.value = false;
+  volver();
+};
 
 const volver = () => {
-  router.push('/')
-}
+  router.push('/');
+};
 </script>
 
 <style scoped>
@@ -324,11 +355,11 @@ select.input-field {
   .form-columnas {
     grid-template-columns: 1fr;
   }
-  
+
   .botones-form {
     flex-direction: column;
   }
-  
+
   .btn-accion {
     justify-content: center;
   }

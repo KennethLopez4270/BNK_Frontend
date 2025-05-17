@@ -8,50 +8,54 @@
     </section>
 
     <!-- Buscador de cuentas -->
-    <section class="buscador">
-      <input
-        type="text"
-        v-model="busqueda"
-        class="input-busqueda"
-        placeholder="Buscar por número de cuenta, nombre o documento..."
-      />
+    <section class="filtros">
+      <div class="filtros-container">
+        <input
+          type="text"
+          v-model="busqueda"
+          class="input-filtro"
+          placeholder="Buscar por número de cuenta, nombre o ID de cliente..."
+        />
+      </div>
     </section>
 
+    <!-- Mensaje de carga o error -->
+    <div v-if="loading" class="cargando">Cargando cuentas...</div>
+    <div v-if="error" class="error">{{ error }}</div>
+
     <!-- Lista de cuentas filtradas -->
-    <section class="lista-cuentas">
-      <div v-if="cuentasFiltradas.length" class="cuentas-grid">
+    <section class="lista-cuentas" v-else>
+      <div v-if="cuentasFiltradas.length">
         <div 
+          class="item-cuenta"
           v-for="cuenta in cuentasFiltradas"
-          :key="cuenta.account_number"
-          class="cuenta-card"
+          :key="cuenta.id"
           @click="seleccionarCuenta(cuenta)"
         >
-          <div class="cuenta-info">
-            <h3>{{ cuenta.full_name }}</h3>
-            <p class="numero-cuenta">{{ cuenta.account_number }}</p>
-            <p class="documento">Documento: {{ cuenta.document_number }}</p>
+          <div class="info-cuenta">
+            <h3>{{ cuenta.clientName || 'Desconocido' }}</h3>
+            <p class="numero-cuenta">{{ cuenta.accountNumber }}</p>
+            <p class="id-cliente">ID Cliente: {{ cuenta.clientId }}</p>
           </div>
-          <div class="saldo">
+          <div class="saldo-cuenta">
             <span class="badge-saldo">${{ cuenta.balance.toFixed(2) }}</span>
           </div>
         </div>
       </div>
 
       <div v-else class="sin-resultados">
-        No se encontraron cuentas
+        No se encontraron cuentas.
       </div>
     </section>
 
     <!-- Formulario de extracción -->
     <section v-if="cuentaSeleccionada" class="formulario-extraccion">
       <div class="formulario-container">
-        <h2 class="subtitulo">
-          Extracción de cuenta: {{ cuentaSeleccionada.account_number }}
-        </h2>
+        <h2 class="subtitulo">Cuenta seleccionada: {{ cuentaSeleccionada.accountNumber }}</h2>
         
         <div class="info-cliente">
-          <p><span>Cliente:</span> {{ cuentaSeleccionada.full_name }}</p>
-          <p><span>Saldo actual:</span> ${{ cuentaSeleccionada.balance.toFixed(2) }}</p>
+          <p><strong>Cliente:</strong> {{ cuentaSeleccionada.clientName || 'Desconocido' }}</p>
+          <p><strong>Saldo actual:</strong> ${{ cuentaSeleccionada.balance.toFixed(2) }}</p>
         </div>
 
         <form @submit.prevent="extraerDinero" class="form-extraccion">
@@ -73,20 +77,20 @@
           </div>
 
           <div class="botones-form">
-            <button type="submit" class="btn-accion btn-extraer">
-              Confirmar Extracción
+            <button type="submit" class="btn-accion" :disabled="loading">
+              <i class="bi bi-cash-stack"></i> {{ loading ? 'Procesando...' : 'Confirmar Extracción' }}
             </button>
-            <button 
-              type="button" 
-              @click.prevent="exportarPDF" 
+            <button
+              @click.prevent="exportarPDF"
               class="btn-accion btn-secundario"
+              :disabled="loading"
             >
-              Exportar en PDF
+              <i class="bi bi-file-earmark-pdf"></i> Exportar en PDF
             </button>
           </div>
         </form>
 
-        <div v-if="mensaje" class="mensaje">
+        <div v-if="mensaje" :class="['mensaje', mensajeError ? 'error' : 'exito']">
           {{ mensaje }}
         </div>
       </div>
@@ -99,66 +103,133 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted } from 'vue';
 
-// Datos simulados
-const cuentas = ref([
-  {
-    full_name: 'María Fernández',
-    document_number: '12345678',
-    account_number: 'ACC001',
-    balance: 1500.75
-  },
-  {
-    full_name: 'Juan Pérez',
-    document_number: '87654321',
-    account_number: 'ACC002',
-    balance: 987.50
-  },
-  {
-    full_name: 'Laura Quispe',
-    document_number: '45678912',
-    account_number: 'ACC003',
-    balance: 5000.00
+const cuentas = ref([]);
+const cuentaSeleccionada = ref(null);
+const busqueda = ref('');
+const form = ref({ amount: '' });
+const mensaje = ref('');
+const mensajeError = ref(false);
+const loading = ref(false);
+const error = ref(null);
+
+onMounted(() => {
+  fetchCuentas();
+});
+
+const fetchCuentas = async () => {
+  try {
+    loading.value = true;
+    error.value = null;
+    const response = await fetch('http://localhost:8082/api/accounts', {
+      method: 'GET',
+      headers: {
+        'Origin': 'http://localhost:5173',
+      },
+    });
+
+    if (!response.ok) {
+      throw new Error(`Error ${response.status}`);
+    }
+
+    cuentas.value = await response.json();
+  } catch (err) {
+    error.value = 'Error al cargar las cuentas: ' + err.message;
+  } finally {
+    loading.value = false;
   }
-])
-
-const cuentaSeleccionada = ref(null)
-const busqueda = ref('')
-const form = ref({ amount: '' })
-const mensaje = ref('')
+};
 
 const cuentasFiltradas = computed(() => {
-  if (!busqueda.value.trim()) return cuentas.value
-  const filtro = busqueda.value.toLowerCase()
-  return cuentas.value.filter(c =>
-    c.full_name.toLowerCase().includes(filtro) ||
-    c.document_number.toLowerCase().includes(filtro) ||
-    c.account_number.toLowerCase().includes(filtro))
-})
+  if (!busqueda.value.trim()) return cuentas.value;
+  const filtro = busqueda.value.toLowerCase();
+  return cuentas.value.filter(
+    (c) =>
+      (c.accountNumber && c.accountNumber.toLowerCase().includes(filtro)) ||
+      (c.clientName && c.clientName.toLowerCase().includes(filtro)) ||
+      (c.clientId && c.clientId.toString().includes(filtro))
+  );
+});
 
 const seleccionarCuenta = (cuenta) => {
-  cuentaSeleccionada.value = cuenta
-  mensaje.value = ''
-  form.value.amount = ''
-}
+  cuentaSeleccionada.value = { ...cuenta };
+  mensaje.value = '';
+  mensajeError.value = false;
+  form.value.amount = '';
+};
 
-const extraerDinero = () => {
-  const monto = form.value.amount
+const extraerDinero = async () => {
+  const monto = form.value.amount;
+  if (monto <= 0) {
+    mensaje.value = 'El monto debe ser mayor que cero.';
+    mensajeError.value = true;
+    return;
+  }
   if (monto > cuentaSeleccionada.value.balance) {
-    mensaje.value = 'El monto excede el saldo disponible.'
-    return
+    mensaje.value = 'El monto excede el saldo disponible.';
+    mensajeError.value = true;
+    return;
   }
 
-  cuentaSeleccionada.value.balance -= monto
-  mensaje.value = `Extracción de $${monto.toFixed(2)} realizada con éxito. Saldo restante: $${cuentaSeleccionada.value.balance.toFixed(2)}.`
-  form.value.amount = ''
-}
+  try {
+    loading.value = true;
+    error.value = null;
+    const response = await fetch(
+      `http://localhost:8082/api/accounts/${cuentaSeleccionada.value.id}/withdraw?amount=${monto}`,
+      {
+        method: 'PATCH',
+        headers: {
+          'Origin': 'http://localhost:5173',
+        },
+      }
+    );
 
-// Simulación de exportar en PDF
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.message || `Error ${response.status}`);
+    }
+
+    const updatedCuenta = await response.json();
+    const index = cuentas.value.findIndex((c) => c.id === cuentaSeleccionada.value.id);
+    if (index !== -1) {
+      cuentas.value[index] = updatedCuenta;
+    }
+
+    cuentaSeleccionada.value = updatedCuenta;
+    mensaje.value = `Extracción de $${monto.toFixed(2)} realizada con éxito. Saldo restante: $${updatedCuenta.balance.toFixed(2)}.`;
+    mensajeError.value = false;
+    form.value.amount = '';
+  } catch (err) {
+    mensaje.value =
+      err.message.includes('400')
+        ? 'Monto inválido. Verifica e intenta nuevamente.'
+        : err.message || 'Error al realizar la extracción.';
+    mensajeError.value = true;
+  } finally {
+    loading.value = false;
+  }
+};
+
 const exportarPDF = () => {
-  alert('PDF generado con la información de extracción (simulado).')
-}
+  if (!cuentaSeleccionada.value) {
+    mensaje.value = 'Selecciona una cuenta para exportar.';
+    mensajeError.value = true;
+    return;
+  }
+
+  const pdfContent = `
+    Comprobante de Extracción
+    ----------------------
+    Cliente: ${cuentaSeleccionada.value.clientName || 'Desconocido'}
+    Número de Cuenta: ${cuentaSeleccionada.value.accountNumber}
+    Saldo Actual: $${cuentaSeleccionada.value.balance.toFixed(2)}
+    Fecha: ${new Date().toLocaleString()}
+  `;
+  console.log('Simulación de PDF:', pdfContent);
+  mensaje.value = 'PDF generado con la información de extracción (simulado).';
+  mensajeError.value = false;
+};
 </script>
 
 <style scoped>
@@ -181,7 +252,7 @@ const exportarPDF = () => {
 .titulo {
   font-size: 2.5rem;
   font-weight: 800;
-  color: #ffc107;
+  color: #3ded97;
   margin-bottom: 15px;
 }
 
@@ -190,15 +261,22 @@ const exportarPDF = () => {
   color: #ccc;
 }
 
-.buscador {
+.filtros {
   width: 100%;
-  max-width: 800px;
+  max-width: 1000px;
   margin-bottom: 30px;
 }
 
-.input-busqueda {
+.filtros-container {
+  background: rgba(0, 0, 0, 0.7);
+  padding: 20px;
+  border-radius: 15px;
+  box-shadow: 0 0 20px rgba(61, 237, 151, 0.1);
+}
+
+.input-filtro {
   width: 100%;
-  padding: 15px;
+  padding: 12px 15px;
   border: 1px solid #3ded97;
   border-radius: 8px;
   background-color: rgba(0, 0, 0, 0.5);
@@ -208,46 +286,40 @@ const exportarPDF = () => {
 
 .lista-cuentas {
   width: 100%;
-  max-width: 800px;
+  max-width: 1000px;
   margin-bottom: 30px;
 }
 
-.cuentas-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
-  gap: 20px;
-}
-
-.cuenta-card {
+.item-cuenta {
   background: rgba(0, 0, 0, 0.7);
-  border-radius: 10px;
   padding: 20px;
-  cursor: pointer;
-  transition: transform 0.3s, box-shadow 0.3s;
-  border: 1px solid rgba(61, 237, 151, 0.1);
+  border-radius: 15px;
+  margin-bottom: 15px;
   display: flex;
   justify-content: space-between;
   align-items: center;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  border: 1px solid transparent;
 }
 
-.cuenta-card:hover {
-  transform: translateY(-5px);
-  box-shadow: 0 10px 20px rgba(61, 237, 151, 0.1);
+.item-cuenta:hover {
+  border-color: #3ded97;
+  box-shadow: 0 0 15px rgba(61, 237, 151, 0.2);
 }
 
-.cuenta-info h3 {
-  font-size: 1.2rem;
+.info-cuenta h3 {
+  color: #3ded97;
   margin-bottom: 5px;
-  color: #fff;
 }
 
 .numero-cuenta {
-  color: #3ded97;
+  color: #fff;
   font-weight: 600;
   margin-bottom: 5px;
 }
 
-.documento {
+.id-cliente {
   color: #ccc;
   font-size: 0.9rem;
 }
@@ -258,7 +330,6 @@ const exportarPDF = () => {
   padding: 8px 15px;
   border-radius: 20px;
   font-weight: 600;
-  font-size: 1rem;
 }
 
 .sin-resultados {
@@ -268,10 +339,24 @@ const exportarPDF = () => {
   font-size: 1.1rem;
 }
 
+.cargando {
+  text-align: center;
+  padding: 30px;
+  color: #ccc;
+  font-size: 1.1rem;
+}
+
+.error {
+  text-align: center;
+  padding: 30px;
+  color: #ff4d4d;
+  font-size: 1.1rem;
+}
+
 .formulario-extraccion {
   width: 100%;
   max-width: 600px;
-  margin-top: 30px;
+  margin-bottom: 30px;
 }
 
 .formulario-container {
@@ -283,7 +368,7 @@ const exportarPDF = () => {
 
 .subtitulo {
   font-size: 1.8rem;
-  color: #ffc107;
+  color: #3ded97;
   margin-bottom: 20px;
   text-align: center;
 }
@@ -293,13 +378,12 @@ const exportarPDF = () => {
 }
 
 .info-cliente p {
-  font-size: 1.1rem;
   margin-bottom: 10px;
+  color: #fff;
 }
 
-.info-cliente span {
+.info-cliente strong {
   color: #3ded97;
-  font-weight: 600;
 }
 
 .form-extraccion {
@@ -329,49 +413,30 @@ const exportarPDF = () => {
   width: 100%;
 }
 
-.input-field:focus {
-  outline: none;
-  border-color: #24d26a;
-  box-shadow: 0 0 5px #24d26a;
-}
-
-.saldo-disponible {
-  color: #ccc;
-  font-size: 0.9rem;
-  text-align: right;
-}
-
 .botones-form {
   display: flex;
   justify-content: center;
   gap: 20px;
-  margin-top: 30px;
+  margin-top: 20px;
 }
 
 .btn-accion {
-  background-color: #24d26a;
+  background-color: #3ded97;
   color: #fff;
   padding: 12px 25px;
   font-size: 1rem;
   border: none;
   border-radius: 30px;
   cursor: pointer;
-  box-shadow: 0 0 10px #24d26a;
+  box-shadow: 0 0 10px #3ded97;
   transition: 0.3s;
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
 
 .btn-accion:hover {
-  background-color: #1abc5c;
-}
-
-.btn-extraer {
-  background-color: #ffc107;
-  color: #000;
-  box-shadow: 0 0 10px #ffc107;
-}
-
-.btn-extraer:hover {
-  background-color: #e0a800;
+  background-color: #24d26a;
 }
 
 .btn-secundario {
@@ -384,13 +449,22 @@ const exportarPDF = () => {
 }
 
 .mensaje {
-  margin-top: 20px;
   padding: 15px;
   border-radius: 8px;
+  margin-top: 20px;
   text-align: center;
-  font-weight: 600;
-  background-color: rgba(61, 237, 151, 0.2);
-  color: #3ded97;
+}
+
+.mensaje.exito {
+  background-color: rgba(40, 167, 69, 0.2);
+  color: #28a745;
+  border: 1px solid #28a745;
+}
+
+.mensaje.error {
+  background-color: rgba(220, 53, 69, 0.2);
+  color: #dc3545;
+  border: 1px solid #dc3545;
 }
 
 .footer {
@@ -402,17 +476,18 @@ const exportarPDF = () => {
 }
 
 @media (max-width: 768px) {
-  .cuentas-grid {
-    grid-template-columns: 1fr;
-  }
-  
   .botones-form {
     flex-direction: column;
   }
   
-  .btn-accion {
+  .item-cuenta {
+    flex-direction: column;
+    text-align: center;
+    gap: 15px;
+  }
+  
+  .info-cuenta, .saldo-cuenta {
     width: 100%;
-    justify-content: center;
   }
 }
 </style>

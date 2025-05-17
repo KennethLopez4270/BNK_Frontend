@@ -7,35 +7,28 @@
       </p>
     </section>
 
-    <!-- Botón volver -->
-    <div class="boton-volver">
-      <button @click="volver" class="btn-accion btn-secundario">
-        <i class="bi bi-arrow-left"></i> Volver
-      </button>
-    </div>
-
     <!-- Filtros -->
     <section class="filtros">
       <div class="filtros-container">
         <div class="filtros-grid">
           <input
-            v-model="filtros.numeroCuenta"
+            v-model="filtros.accountNumber"
             type="text"
             class="input-filtro"
-            placeholder="Buscar por N° de cuenta"
+            placeholder="N° de cuenta"
           />
           <input
-            v-model="filtros.idCliente"
+            v-model="filtros.clientId"
             type="text"
             class="input-filtro"
-            placeholder="Buscar por ID de cliente"
+            placeholder="ID de cliente"
           />
-          <select v-model="filtros.tipoCuenta" class="select-filtro">
+          <select v-model="filtros.accountType" class="select-filtro">
             <option value="">Tipo de cuenta</option>
             <option value="ahorro">Ahorro</option>
             <option value="corriente">Corriente</option>
           </select>
-          <select v-model="filtros.estado" class="select-filtro">
+          <select v-model="filtros.status" class="select-filtro">
             <option value="">Estado</option>
             <option value="activo">Activo</option>
             <option value="inactivo">Inactivo</option>
@@ -44,8 +37,12 @@
       </div>
     </section>
 
+    <!-- Mensaje de carga o error -->
+    <div v-if="loading" class="cargando">Cargando cuentas...</div>
+    <div v-if="error" class="error">{{ error }}</div>
+
     <!-- Tabla -->
-    <section class="tabla-container">
+    <section class="tabla-container" v-else>
       <div v-if="cuentasFiltradas.length" class="tabla-scroll">
         <table class="tabla-cuentas">
           <thead>
@@ -60,13 +57,13 @@
           <tbody>
             <tr 
               v-for="cuenta in cuentasFiltradas" 
-              :key="cuenta.account_number" 
+              :key="cuenta.id"
               @click="abrirDetalleCuenta(cuenta)"
-              class="fila-cuenta"
+              class="fila-seleccionable"
             >
-              <td>{{ cuenta.account_number }}</td>
-              <td>{{ cuenta.client_id }}</td>
-              <td>{{ cuenta.account_type }}</td>
+              <td>{{ cuenta.accountNumber }}</td>
+              <td>{{ cuenta.clientId }}</td>
+              <td>{{ cuenta.accountType }}</td>
               <td>${{ cuenta.balance.toFixed(2) }}</td>
               <td>
                 <span :class="`estado ${cuenta.status}`">
@@ -79,24 +76,63 @@
       </div>
 
       <div v-else class="sin-resultados">
-        No se encontraron cuentas con los filtros aplicados.
+        No hay cuentas que coincidan con los filtros.
       </div>
     </section>
 
+    <!-- Botón volver -->
+    <div class="boton-volver">
+      <button @click="volver" class="btn-accion btn-secundario" :disabled="loading">
+        <i class="bi bi-arrow-left"></i> Volver
+      </button>
+    </div>
+
     <!-- Modal Detalle -->
-    <div v-if="mostrarModalDetalle" class="modal-overlay">
-      <div class="modal-contenido modal-info">
-        <div class="modal-header">
-          <h3>Detalle de la cuenta</h3>
-          <button @click="mostrarModalDetalle = false" class="btn-cerrar">
-            <i class="bi bi-x"></i>
-          </button>
-        </div>
+    <div v-if="mostrarModalDetalle" class="modal-overlay" @click="mostrarModalDetalle = false">
+      <div class="modal-contenido modal-info" @click.stop>
+        <h3>Detalle de la cuenta</h3>
         
-        <div class="modal-body" v-if="cuentaSeleccionada">
+        <div class="detalle-cuenta" v-if="cuentaSeleccionada">
           <div class="detalle-item">
-            <span class="detalle-label">Número de cuenta:</span>
-            <span class="detalle-valor">{{ cuentaSeleccionada.account_number }}</span>
+            <span class="detalle-etiqueta">Número de cuenta:</span>
+            <span class="detalle-valor">{{ cuentaSeleccionada.accountNumber }}</span>
+          </div>
+          
+          <div class="detalle-item">
+            <span class="detalle-etiqueta">ID Cliente:</span>
+            <span class="detalle-valor">{{ cuentaSeleccionada.clientId }}</span>
+          </div>
+          
+          <div class="detalle-item">
+            <span class="detalle-etiqueta">Tipo de cuenta:</span>
+            <span class="detalle-valor">{{ cuentaSeleccionada.accountType }}</span>
+          </div>
+          
+          <div class="detalle-item">
+            <span class="detalle-etiqueta">Saldo:</span>
+            <span class="detalle-valor">${{ cuentaSeleccionada.balance.toFixed(2) }}</span>
+          </div>
+          
+          <div class="detalle-item">
+            <span class="detalle-etiqueta">Estado:</span>
+            <span :class="`estado ${cuentaSeleccionada.status}`">
+              {{ cuentaSeleccionada.status }}
+            </span>
+          </div>
+          
+          <div class="detalle-item">
+            <span class="detalle-etiqueta">Último Depósito:</span>
+            <span class="detalle-valor">{{ cuentaSeleccionada.lastDeposit || 'No disponible' }}</span>
+          </div>
+          
+          <div class="detalle-item">
+            <span class="detalle-etiqueta">Fecha de Creación:</span>
+            <span class="detalle-valor">{{ cuentaSeleccionada.creationDate || 'No disponible' }}</span>
+          </div>
+          
+          <div class="detalle-item">
+            <span class="detalle-etiqueta">Última Extracción:</span>
+            <span class="detalle-valor">{{ cuentaSeleccionada.lastWithdrawal || 'No disponible' }}</span>
           </div>
           
           <div class="detalle-item">
@@ -142,6 +178,10 @@
             Cerrar
           </button>
         </div>
+
+        <button @click="mostrarModalDetalle = false" class="btn-accion">
+          Cerrar
+        </button>
       </div>
     </div>
 
@@ -152,73 +192,67 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
-import { useRouter } from 'vue-router'
+import { ref, computed, onMounted } from 'vue';
+import { useRouter } from 'vue-router';
 
-const router = useRouter()
+const router = useRouter();
 
-const cuentas = ref([])
-const cuentaSeleccionada = ref(null)
-const mostrarModalDetalle = ref(false)
+const cuentas = ref([]);
+const cuentaSeleccionada = ref(null);
 const filtros = ref({
-  numeroCuenta: '',
-  idCliente: '',
-  tipoCuenta: '',
-  estado: ''
-})
+  accountNumber: '',
+  clientId: '',
+  accountType: '',
+  status: '',
+});
+const mostrarModalDetalle = ref(false);
+const loading = ref(false);
+const error = ref(null);
 
 onMounted(() => {
-  cuentas.value = [
-    { 
-      client_id: 1, 
-      account_number: '000123', 
-      account_type: 'ahorro', 
-      balance: 1500, 
-      status: 'activo',
-      last_deposit: '2025-05-01', 
-      creation_date: '2023-01-15', 
-      last_withdrawal: '2025-04-30' 
-    },
-    { 
-      client_id: 2, 
-      account_number: '000456', 
-      account_type: 'corriente', 
-      balance: 230, 
-      status: 'inactivo',
-      last_deposit: '2025-03-25', 
-      creation_date: '2022-08-10', 
-      last_withdrawal: '2025-04-05' 
-    },
-    { 
-      client_id: 3, 
-      account_number: '000789', 
-      account_type: 'ahorro', 
-      balance: 985, 
-      status: 'activo',
-      last_deposit: '2025-04-15', 
-      creation_date: '2022-09-20', 
-      last_withdrawal: '2025-04-18' 
+  fetchCuentas();
+});
+
+const fetchCuentas = async () => {
+  try {
+    loading.value = true;
+    error.value = null;
+    const response = await fetch('http://localhost:8082/api/accounts', {
+      method: 'GET',
+      headers: {
+        'Origin': 'http://localhost:5173',
+      },
+    });
+
+    if (!response.ok) {
+      throw new Error(`Error ${response.status}`);
     }
-  ]
-})
+
+    cuentas.value = await response.json();
+  } catch (err) {
+    error.value = 'Error al cargar las cuentas: ' + err.message;
+  } finally {
+    loading.value = false;
+  }
+};
 
 const cuentasFiltradas = computed(() => {
-  return cuentas.value.filter(c => {
+  return cuentas.value.filter((c) => {
     return (
-      (!filtros.value.numeroCuenta || c.account_number.includes(filtros.value.numeroCuenta)) &&
-      (!filtros.value.idCliente || c.client_id.toString().includes(filtros.value.idCliente)) &&
-      (!filtros.value.tipoCuenta || c.account_type === filtros.value.tipoCuenta) &&
-      (!filtros.value.estado || c.status === filtros.value.estado)
-    )
-  })
-})
+      (!filtros.value.accountNumber || c.accountNumber.includes(filtros.value.accountNumber)) &&
+      (!filtros.value.clientId || c.clientId.toString().includes(filtros.value.clientId)) &&
+      (!filtros.value.accountType || c.accountType === filtros.value.accountType) &&
+      (!filtros.value.status || c.status === filtros.value.status)
+    );
+  });
+});
 
 const abrirDetalleCuenta = (cuenta) => {
-  cuentaSeleccionada.value = cuenta
-  mostrarModalDetalle.value = true
-}
+  cuentaSeleccionada.value = cuenta;
+  mostrarModalDetalle.value = true;
+};
 
-const volver = () => router.push('/')
+const volver = () => router.push('/');
 </script>
 
 <style scoped>
@@ -241,20 +275,13 @@ const volver = () => router.push('/')
 .titulo {
   font-size: 2.5rem;
   font-weight: 800;
-  color: #28a745;
+  color: #3ded97;
   margin-bottom: 15px;
 }
 
 .descripcion {
   font-size: 1.2rem;
   color: #ccc;
-}
-
-.boton-volver {
-  margin-bottom: 30px;
-  width: 100%;
-  max-width: 1000px;
-  text-align: left;
 }
 
 .filtros {
@@ -276,7 +303,8 @@ const volver = () => router.push('/')
   gap: 15px;
 }
 
-.input-filtro, .select-filtro {
+.input-filtro,
+.select-filtro {
   width: 100%;
   padding: 12px 15px;
   border: 1px solid #3ded97;
@@ -313,7 +341,8 @@ const volver = () => router.push('/')
   border-collapse: collapse;
 }
 
-.tabla-cuentas th, .tabla-cuentas td {
+.tabla-cuentas th,
+.tabla-cuentas td {
   padding: 15px;
   text-align: left;
   border-bottom: 1px solid #333;
@@ -322,17 +351,16 @@ const volver = () => router.push('/')
 .tabla-cuentas th {
   color: #3ded97;
   font-weight: 600;
-  cursor: pointer;
   user-select: none;
 }
 
-.fila-cuenta {
+.fila-seleccionable {
   cursor: pointer;
   transition: background-color 0.3s;
 }
 
-.fila-cuenta:hover {
-  background-color: rgba(255, 255, 255, 0.05);
+.fila-seleccionable:hover {
+  background-color: rgba(61, 237, 151, 0.1);
 }
 
 .estado {
@@ -359,6 +387,52 @@ const volver = () => router.push('/')
   font-size: 1.1rem;
 }
 
+.cargando {
+  text-align: center;
+  padding: 30px;
+  color: #ccc;
+  font-size: 1.1rem;
+}
+
+.error {
+  text-align: center;
+  padding: 30px;
+  color: #ff4d4d;
+  font-size: 1.1rem;
+}
+
+.boton-volver {
+  margin-bottom: 30px;
+}
+
+.btn-accion {
+  background-color: #3ded97;
+  color: #fff;
+  padding: 12px 25px;
+  font-size: 1rem;
+  border: none;
+  border-radius: 30px;
+  cursor: pointer;
+  box-shadow: 0 0 10px #3ded97;
+  transition: 0.3s;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.btn-accion:hover {
+  background-color: #24d26a;
+}
+
+.btn-secundario {
+  background-color: #6c757d;
+  box-shadow: 0 0 10px #6c757d;
+}
+
+.btn-secundario:hover {
+  background-color: #5a6268;
+}
+
 .modal-overlay {
   position: fixed;
   top: 0;
@@ -374,12 +448,13 @@ const volver = () => router.push('/')
 
 .modal-contenido {
   background: linear-gradient(to bottom, #122523, #000);
+  padding: 30px;
   border-radius: 15px;
   width: 90%;
-  max-width: 600px;
+  max-width: 500px;
   border: 1px solid #3ded97;
   box-shadow: 0 0 30px rgba(61, 237, 151, 0.3);
-  overflow: hidden;
+  text-align: center;
 }
 
 .modal-info {
@@ -387,87 +462,31 @@ const volver = () => router.push('/')
   box-shadow: 0 0 30px rgba(23, 162, 184, 0.3);
 }
 
-.modal-header {
-  padding: 20px;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  border-bottom: 1px solid #333;
-}
-
-.modal-header h3 {
+.modal-contenido h3 {
   font-size: 1.5rem;
+  margin-bottom: 20px;
   color: #3ded97;
-  margin: 0;
 }
 
-.btn-cerrar {
-  background: none;
-  border: none;
-  color: #ccc;
-  font-size: 1.5rem;
-  cursor: pointer;
-  padding: 5px;
-}
-
-.btn-cerrar:hover {
-  color: #fff;
-}
-
-.modal-body {
-  padding: 20px;
+.detalle-cuenta {
+  text-align: left;
+  margin-bottom: 30px;
 }
 
 .detalle-item {
   display: flex;
   justify-content: space-between;
-  padding: 12px 0;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  padding: 10px 0;
+  border-bottom: 1px solid #333;
 }
 
-.detalle-item:last-child {
-  border-bottom: none;
-}
-
-.detalle-label {
+.detalle-etiqueta {
   color: #3ded97;
   font-weight: 600;
 }
 
 .detalle-valor {
   color: #fff;
-}
-
-.modal-footer {
-  padding: 20px;
-  display: flex;
-  justify-content: flex-end;
-  border-top: 1px solid #333;
-}
-
-.btn-accion {
-  background-color: #24d26a;
-  color: #fff;
-  padding: 12px 25px;
-  font-size: 1rem;
-  border: none;
-  border-radius: 30px;
-  cursor: pointer;
-  box-shadow: 0 0 10px #24d26a;
-  transition: 0.3s;
-}
-
-.btn-accion:hover {
-  background-color: #1abc5c;
-}
-
-.btn-secundario {
-  background-color: #6c757d;
-  box-shadow: 0 0 10px #6c757d;
-}
-
-.btn-secundario:hover {
-  background-color: #5a6268;
 }
 
 .footer {
@@ -483,20 +502,15 @@ const volver = () => router.push('/')
     grid-template-columns: 1fr;
   }
   
-  .tabla-cuentas th, 
-  .tabla-cuentas td {
-    padding: 10px 5px;
-    font-size: 0.9rem;
-  }
-  
   .detalle-item {
     flex-direction: column;
     gap: 5px;
   }
   
-  .detalle-label,
-  .detalle-valor {
-    width: 100%;
+  .tabla-cuentas th,
+  .tabla-cuentas td {
+    padding: 10px 5px;
+    font-size: 0.9rem;
   }
 }
 </style>

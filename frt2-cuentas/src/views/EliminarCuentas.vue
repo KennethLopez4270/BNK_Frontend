@@ -7,35 +7,28 @@
       </p>
     </section>
 
-    <!-- Botón volver -->
-    <div class="boton-volver">
-      <button @click="volver" class="btn-accion btn-secundario">
-        <i class="bi bi-arrow-left"></i> Volver
-      </button>
-    </div>
-
     <!-- Filtros -->
     <section class="filtros">
       <div class="filtros-container">
         <div class="filtros-grid">
           <input
-            v-model="filtros.numeroCuenta"
+            v-model="filtros.accountNumber"
             type="text"
             class="input-filtro"
-            placeholder="Buscar por N° de cuenta"
+            placeholder="N° de cuenta"
           />
           <input
-            v-model="filtros.idCliente"
+            v-model="filtros.clientId"
             type="text"
             class="input-filtro"
-            placeholder="Buscar por ID de cliente"
+            placeholder="ID de cliente"
           />
-          <select v-model="filtros.tipoCuenta" class="select-filtro">
+          <select v-model="filtros.accountType" class="select-filtro">
             <option value="">Tipo de cuenta</option>
             <option value="ahorro">Ahorro</option>
             <option value="corriente">Corriente</option>
           </select>
-          <select v-model="filtros.estado" class="select-filtro">
+          <select v-model="filtros.status" class="select-filtro">
             <option value="">Estado</option>
             <option value="activo">Activo</option>
             <option value="inactivo">Inactivo</option>
@@ -44,8 +37,12 @@
       </div>
     </section>
 
+    <!-- Mensaje de carga o error -->
+    <div v-if="loading" class="cargando">Cargando cuentas...</div>
+    <div v-if="error" class="error">{{ error }}</div>
+
     <!-- Tabla -->
-    <section class="tabla-container">
+    <section class="tabla-container" v-else>
       <div v-if="cuentasFiltradas.length" class="tabla-scroll">
         <table class="tabla-cuentas">
           <thead>
@@ -55,14 +52,14 @@
               <th>Tipo</th>
               <th>Saldo</th>
               <th>Estado</th>
-              <th>Acción</th>
+              <th>Acciones</th>
             </tr>
           </thead>
           <tbody>
-            <tr v-for="cuenta in cuentasFiltradas" :key="cuenta.account_number">
-              <td>{{ cuenta.account_number }}</td>
-              <td>{{ cuenta.client_id }}</td>
-              <td>{{ cuenta.account_type }}</td>
+            <tr v-for="cuenta in cuentasFiltradas" :key="cuenta.id">
+              <td>{{ cuenta.accountNumber }}</td>
+              <td>{{ cuenta.clientId }}</td>
+              <td>{{ cuenta.accountType }}</td>
               <td>${{ cuenta.balance.toFixed(2) }}</td>
               <td>
                 <span :class="`estado ${cuenta.status}`">
@@ -70,9 +67,10 @@
                 </span>
               </td>
               <td class="acciones">
-                <button 
+                <button
                   class="btn-accion btn-eliminar btn-pequeno"
                   @click="confirmar(cuenta)"
+                  :disabled="loading"
                 >
                   <i class="bi bi-trash"></i> Eliminar
                 </button>
@@ -83,31 +81,38 @@
       </div>
 
       <div v-else class="sin-resultados">
-        No se encontraron cuentas con los filtros aplicados.
+        No hay cuentas que coincidan con los filtros.
       </div>
     </section>
 
-    <!-- Modales -->
-    <div v-if="mostrarModalConfirmar" class="modal-overlay">
-      <div class="modal-contenido modal-advertencia">
+    <!-- Botón volver -->
+    <div class="boton-volver">
+      <button @click="volver" class="btn-accion btn-secundario" :disabled="loading">
+        <i class="bi bi-arrow-left"></i> Volver
+      </button>
+    </div>
+
+    <!-- Modales (actualizados con el mismo estilo) -->
+    <div v-if="mostrarModalConfirmar" class="modal-overlay" @click="mostrarModalConfirmar = false">
+      <div class="modal-contenido modal-advertencia" @click.stop>
         <h3>¿Eliminar cuenta?</h3>
         <p>
-          ¿Deseas eliminar la cuenta <strong>{{ cuentaSeleccionada?.account_number }}</strong>?
+          ¿Deseas eliminar la cuenta <strong>{{ cuentaSeleccionada?.accountNumber }}</strong>?
           Esta acción es irreversible.
         </p>
         <div class="botones-modal">
           <button @click="mostrarModalConfirmar = false" class="btn-accion btn-cancelar">
             Cancelar
           </button>
-          <button @click="eliminarCuenta" class="btn-accion btn-eliminar">
-            Eliminar
+          <button @click="eliminarCuenta" class="btn-accion btn-eliminar" :disabled="loading">
+            <i class="bi bi-trash"></i> {{ loading ? 'Eliminando...' : 'Eliminar' }}
           </button>
         </div>
       </div>
     </div>
 
-    <div v-if="mostrarModalExito" class="modal-overlay">
-      <div class="modal-contenido modal-exito">
+    <div v-if="mostrarModalExito" class="modal-overlay" @click="mostrarModalExito = false">
+      <div class="modal-contenido modal-exito" @click.stop>
         <h3>Cuenta eliminada</h3>
         <p>La cuenta fue eliminada correctamente.</p>
         <button @click="mostrarModalExito = false" class="btn-accion">
@@ -116,12 +121,12 @@
       </div>
     </div>
 
-    <div v-if="mostrarModalError" class="modal-overlay">
-      <div class="modal-contenido modal-error">
+    <div v-if="mostrarModalError" class="modal-overlay" @click="mostrarModalError = false">
+      <div class="modal-contenido modal-error" @click.stop>
         <h3>Error</h3>
-        <p>No se pudo eliminar la cuenta. Intenta más tarde.</p>
+        <p>{{ errorMessage }}</p>
         <button @click="mostrarModalError = false" class="btn-accion">
-          Cerrar
+          Aceptar
         </button>
       </div>
     </div>
@@ -133,62 +138,102 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
-import { useRouter } from 'vue-router'
+import { ref, computed, onMounted } from 'vue';
+import { useRouter } from 'vue-router';
 
-const router = useRouter()
+const router = useRouter();
 
-const cuentas = ref([])
-const cuentaSeleccionada = ref(null)
+const cuentas = ref([]);
+const cuentaSeleccionada = ref(null);
 const filtros = ref({
-  numeroCuenta: '',
-  idCliente: '',
-  tipoCuenta: '',
-  estado: ''
-})
-
-const mostrarModalConfirmar = ref(false)
-const mostrarModalExito = ref(false)
-const mostrarModalError = ref(false)
+  accountNumber: '',
+  clientId: '',
+  accountType: '',
+  status: '',
+});
+const mostrarModalConfirmar = ref(false);
+const mostrarModalExito = ref(false);
+const mostrarModalError = ref(false);
+const loading = ref(false);
+const error = ref(null);
+const errorMessage = ref('No se pudo eliminar la cuenta. Intenta más tarde.');
 
 onMounted(() => {
-  cuentas.value = [
-    { client_id: 1, account_number: '000123', account_type: 'ahorro', balance: 1500, status: 'activo' },
-    { client_id: 2, account_number: '000456', account_type: 'corriente', balance: 230, status: 'inactivo' },
-    { client_id: 3, account_number: '000789', account_type: 'ahorro', balance: 985, status: 'activo' }
-  ]
-})
+  fetchCuentas();
+});
+
+const fetchCuentas = async () => {
+  try {
+    loading.value = true;
+    error.value = null;
+    const response = await fetch('http://localhost:8082/api/accounts', {
+      method: 'GET',
+      headers: {
+        'Origin': 'http://localhost:5173',
+      },
+    });
+
+    if (!response.ok) {
+      throw new Error(`Error ${response.status}`);
+    }
+
+    cuentas.value = await response.json();
+  } catch (err) {
+    error.value = 'Error al cargar las cuentas: ' + err.message;
+  } finally {
+    loading.value = false;
+  }
+};
 
 const cuentasFiltradas = computed(() => {
-  return cuentas.value.filter(c => {
+  return cuentas.value.filter((c) => {
     return (
-      (!filtros.value.numeroCuenta || c.account_number.includes(filtros.value.numeroCuenta)) &&
-      (!filtros.value.idCliente || c.client_id.toString().includes(filtros.value.idCliente)) &&
-      (!filtros.value.tipoCuenta || c.account_type === filtros.value.tipoCuenta) &&
-      (!filtros.value.estado || c.status === filtros.value.estado)
-    )
-  })
-})
+      (!filtros.value.accountNumber || c.accountNumber.includes(filtros.value.accountNumber)) &&
+      (!filtros.value.clientId || c.clientId.toString().includes(filtros.value.clientId)) &&
+      (!filtros.value.accountType || c.accountType === filtros.value.accountType) &&
+      (!filtros.value.status || c.status === filtros.value.status)
+    );
+  });
+});
 
 const confirmar = (cuenta) => {
-  cuentaSeleccionada.value = cuenta
-  mostrarModalConfirmar.value = true
-}
+  cuentaSeleccionada.value = cuenta;
+  mostrarModalConfirmar.value = true;
+};
 
-const eliminarCuenta = () => {
+const eliminarCuenta = async () => {
   try {
-    cuentas.value = cuentas.value.filter(
-      c => c.account_number !== cuentaSeleccionada.value.account_number
-    )
-    mostrarModalConfirmar.value = false
-    mostrarModalExito.value = true
-  } catch (e) {
-    mostrarModalConfirmar.value = false
-    mostrarModalError.value = true
-  }
-}
+    loading.value = true;
+    error.value = null;
+    const response = await fetch(`http://localhost:8080/api/accounts/${cuentaSeleccionada.value.id}`, {
+      method: 'DELETE',
+      headers: {
+        'Origin': 'http://localhost:5173',
+      },
+    });
 
-const volver = () => router.push('/')
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.message || `Error ${response.status}`);
+    }
+
+    cuentas.value = cuentas.value.filter((c) => c.id !== cuentaSeleccionada.value.id);
+    mostrarModalConfirmar.value = false;
+    mostrarModalExito.value = true;
+    cuentaSeleccionada.value = null;
+  } catch (err) {
+    errorMessage.value =
+      err.message.includes('400')
+        ? 'Datos inválidos. Verifica e intenta nuevamente.'
+        : err.message || 'No se pudo eliminar la cuenta. Intenta más tarde.';
+    mostrarModalConfirmar.value = false;
+    mostrarModalError.value = true;
+  } finally {
+    loading.value = false;
+  }
+};
+
+const volver = () => router.push('/');
 </script>
 
 <style scoped>
@@ -220,13 +265,6 @@ const volver = () => router.push('/')
   color: #ccc;
 }
 
-.boton-volver {
-  margin-bottom: 30px;
-  width: 100%;
-  max-width: 1000px;
-  text-align: left;
-}
-
 .filtros {
   width: 100%;
   max-width: 1000px;
@@ -237,7 +275,7 @@ const volver = () => router.push('/')
   background: rgba(0, 0, 0, 0.7);
   padding: 20px;
   border-radius: 15px;
-  box-shadow: 0 0 20px rgba(61, 237, 151, 0.1);
+  box-shadow: 0 0 20px rgba(255, 77, 77, 0.1);
 }
 
 .filtros-grid {
@@ -246,10 +284,11 @@ const volver = () => router.push('/')
   gap: 15px;
 }
 
-.input-filtro, .select-filtro {
+.input-filtro,
+.select-filtro {
   width: 100%;
   padding: 12px 15px;
-  border: 1px solid #3ded97;
+  border: 1px solid #ff4d4d;
   border-radius: 8px;
   background-color: rgba(0, 0, 0, 0.5);
   color: #fff;
@@ -258,7 +297,7 @@ const volver = () => router.push('/')
 
 .select-filtro {
   appearance: none;
-  background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%233ded97'%3e%3cpath d='M7 10l5 5 5-5z'/%3e%3c/svg%3e");
+  background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23ff4d4d'%3e%3cpath d='M7 10l5 5 5-5z'/%3e%3c/svg%3e");
   background-repeat: no-repeat;
   background-position: right 10px center;
   background-size: 20px;
@@ -271,7 +310,7 @@ const volver = () => router.push('/')
   border-radius: 15px;
   padding: 20px;
   margin-bottom: 30px;
-  box-shadow: 0 0 20px rgba(61, 237, 151, 0.1);
+  box-shadow: 0 0 20px rgba(255, 77, 77, 0.1);
 }
 
 .tabla-scroll {
@@ -283,14 +322,15 @@ const volver = () => router.push('/')
   border-collapse: collapse;
 }
 
-.tabla-cuentas th, .tabla-cuentas td {
+.tabla-cuentas th,
+.tabla-cuentas td {
   padding: 15px;
   text-align: left;
   border-bottom: 1px solid #333;
 }
 
 .tabla-cuentas th {
-  color: #3ded97;
+  color: #ff4d4d;
   font-weight: 600;
   cursor: pointer;
   user-select: none;
@@ -330,15 +370,31 @@ const volver = () => router.push('/')
   font-size: 1.1rem;
 }
 
+.cargando,
+.error {
+  text-align: center;
+  padding: 30px;
+  color: #ccc;
+  font-size: 1.1rem;
+}
+
+.error {
+  color: #ff4d4d;
+}
+
+.boton-volver {
+  margin-bottom: 30px;
+}
+
 .btn-accion {
-  background-color: #24d26a;
+  background-color: #ff4d4d;
   color: #fff;
   padding: 12px 25px;
   font-size: 1rem;
   border: none;
   border-radius: 30px;
   cursor: pointer;
-  box-shadow: 0 0 10px #24d26a;
+  box-shadow: 0 0 10px #ff4d4d;
   transition: 0.3s;
   display: flex;
   align-items: center;
@@ -346,7 +402,7 @@ const volver = () => router.push('/')
 }
 
 .btn-accion:hover {
-  background-color: #1abc5c;
+  background-color: #e04444;
 }
 
 .btn-pequeno {
@@ -400,8 +456,8 @@ const volver = () => router.push('/')
   border-radius: 15px;
   width: 90%;
   max-width: 500px;
-  border: 1px solid #3ded97;
-  box-shadow: 0 0 30px rgba(61, 237, 151, 0.3);
+  border: 1px solid #ff4d4d;
+  box-shadow: 0 0 30px rgba(255, 77, 77, 0.3);
   text-align: center;
 }
 
@@ -423,7 +479,7 @@ const volver = () => router.push('/')
 .modal-contenido h3 {
   font-size: 1.5rem;
   margin-bottom: 20px;
-  color: #3ded97;
+  color: #ff4d4d;
 }
 
 .modal-contenido p {
@@ -449,19 +505,15 @@ const volver = () => router.push('/')
   .filtros-grid {
     grid-template-columns: 1fr;
   }
-  
-  .tabla-cuentas th, 
-  .tabla-cuentas td {
-    padding: 10px 5px;
-    font-size: 0.9rem;
-  }
-  
+
   .botones-modal {
     flex-direction: column;
   }
-  
-  .btn-accion {
-    justify-content: center;
+
+  .tabla-cuentas th,
+  .tabla-cuentas td {
+    padding: 10px 5px;
+    font-size: 0.9rem;
   }
 }
 </style>
