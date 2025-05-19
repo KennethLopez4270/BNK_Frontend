@@ -209,11 +209,6 @@
         </div>
       </div>
     </div>
-
-    <!-- Efecto de partículas -->
-    <div class="bg-particles">
-      <div v-for="i in 20" :key="i" class="particle" :style="particleStyle(i)"></div>
-    </div>
   </div>
 </template>
 
@@ -291,18 +286,6 @@ function accountTypeIcon(tipo) {
 function glowColor(tipo) {
   return tipo === 'ahorro' ? 'glow-green' : 'glow-blue'
 }
-
-function particleStyle(i) {
-  return {
-    width: `${Math.random() * 10 + 5}px`,
-    height: `${Math.random() * 10 + 5}px`,
-    left: `${Math.random() * 100}%`,
-    top: `${Math.random() * 100}%`,
-    animationDelay: `${Math.random() * 15}s`,
-    animationDuration: `${Math.random() * 20 + 10}s`
-  }
-}
-
 // Funciones principales
 function selectCuentaOrigen(id) {
   form.value.cuentaOrigen = id
