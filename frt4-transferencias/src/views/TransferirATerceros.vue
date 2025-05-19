@@ -1,5 +1,5 @@
 <template>
-    <h1>Transferencias</h1>
+    <h1>Transferencias a Terceros</h1>
 </template>
 
 <script setup>
