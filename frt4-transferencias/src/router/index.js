@@ -1,6 +1,5 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import TransferenciasHome from '../views/TransferenciasHome.vue'
-import CrearTransferencia from '../views/CrearTransferencia.vue'
 import DetalleTransferencia from '../views/DetalleTransferencia.vue'
 import HistorialTransferencias from '../views/HistorialTransferencias.vue'
 import TransferirAOtroBanco from '../views/TransferirAOtroBanco.vue'
@@ -10,7 +9,6 @@ import ComprobanteTransferencia from '../views/ComprobanteTransferencia.vue'
 
 const routes = [
   { path: '/', name: 'HomeTransferencias', component: TransferenciasHome },
-  { path: '/crear-transferencia', name: 'CrearCuenta', component: CrearTransferencia },
   { path: '/detalle-transferencia/:id', name: 'DetalleTransferencia', component:DetalleTransferencia },
   { path: '/historial-transferencias', name: 'HistorialTransferencias', component:HistorialTransferencias},
   { path: '/transferir-otro-banco', name: 'TransferirAOtroBanco', component: TransferirAOtroBanco},
