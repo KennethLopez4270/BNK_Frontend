@@ -9,6 +9,7 @@ export default defineConfig({
 
 federation({
   remotes: {
+    clientes: 'http://localhost:5174/assets/remoteEntry.js',
     prestamos: 'http://localhost:5177/assets/remoteEntry.js',
   }
 })
