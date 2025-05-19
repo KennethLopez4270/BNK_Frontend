@@ -6,6 +6,7 @@ import TransferirAOtroBanco from '../views/TransferirAOtroBanco.vue'
 import TransferirATerceros from '../views/TransferirATerceros.vue'
 import TransferirPropias from '../views/TransferirPropias.vue'
 import ComprobanteTransferencia from '../views/ComprobanteTransferencia.vue'
+import login from '../components/login.vue'
 
 const routes = [
   { path: '/', name: 'HomeTransferencias', component: TransferenciasHome },
@@ -14,7 +15,8 @@ const routes = [
   { path: '/transferir-otro-banco', name: 'TransferirAOtroBanco', component: TransferirAOtroBanco},
   { path: '/transferir-terceros', name: 'TransferirATerceros', component: TransferirATerceros},
   { path: '/transferir-propias', name: 'TransferirPropias', component:TransferirPropias},
-  { path: '/comprobante-transferencia/:id', name: 'ComprobanteTransferencia', component: ComprobanteTransferencia}
+  { path: '/comprobante-transferencia/:id', name: 'ComprobanteTransferencia', component: ComprobanteTransferencia},
+  { path: '/login', name: 'login', component: login }
 ]
 
 const router = createRouter({
