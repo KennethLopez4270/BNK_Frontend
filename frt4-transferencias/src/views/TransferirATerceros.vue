@@ -1,10 +1,12 @@
-```vue
 <template>
   <div class="transferencias-app">
+    <!-- Botón de volver con animación -->
     <button @click="volver" class="back-button animate__animated animate__fadeIn">
       <i class="bi bi-arrow-left"></i> Volver
     </button>
-    <section class="hero">
+
+    <!-- Sección hero con animación -->
+    <section class="hero animate__animated animate__fadeIn">
       <h1 class="titulo">Transferencia a terceros</h1>
       <p class="descripcion">
         Ingresa los datos del destinatario y el monto para realizar tu transferencia
@@ -13,15 +15,17 @@
 
     <div class="transferencia-content">
       <div class="accounts-section">
+        <!-- Cuentas Origen con efecto escalonado -->
         <div class="accounts-column">
-          <h5 class="section-title">
+          <h5 class="section-title animate__animated animate__fadeIn">
             <i class="bi bi-arrow-up-circle"></i> Cuenta origen
           </h5>
           <div class="cards-container">
             <div
-              class="card-accion"
-              v-for="cuenta in cuentas"
+              class="card-accion animate__animated animate__fadeInUp"
+              v-for="(cuenta, index) in cuentas"
               :key="'origen-' + cuenta.id"
+              :style="`animation-delay: ${index * 0.1}s`"
               :class="{ 'selected-origin': form.cuentaOrigen === cuenta.id }"
               @click="selectCuentaOrigen(cuenta.id)"
             >
@@ -38,11 +42,13 @@
           </div>
         </div>
 
+        <!-- Datos Destinatario con animación -->
         <div class="accounts-column">
-          <h5 class="section-title">
+          <h5 class="section-title animate__animated animate__fadeIn" style="animation-delay: 0.1s">
             <i class="bi bi-arrow-down-circle"></i> Datos del destinatario
           </h5>
-          <div class="form-group">
+          
+          <div class="form-group animate__animated animate__fadeIn" style="animation-delay: 0.2s">
             <label for="identificador" class="form-label">
               <i class="bi bi-person-fill"></i> Número de documento o email
             </label>
@@ -56,10 +62,12 @@
                 placeholder="Ej: 12345678 o usuario@ejemplo.com"
                 required
               />
-            </div><br>
+            </div>
+            <br>
             <small v-if="errorIdentificador" class="text-danger">{{ errorIdentificador }}</small>
           </div>
-          <div class="form-group" v-if="destinatario">
+          
+          <div class="form-group animate__animated animate__fadeIn" v-if="destinatario" style="animation-delay: 0.3s">
             <label class="form-label">Nombre</label>
             <input
               type="text"
@@ -67,9 +75,13 @@
               v-model="destinatario.full_name"
               readonly
             />
-          </div><br>
-          <div class="form-group" v-if="destinatario">
+          </div>
+          
+          <br>
+          
+          <div class="form-group animate__animated animate__fadeIn" v-if="destinatario" style="animation-delay: 0.4s">
             <label class="form-label">Cuenta destino</label>
+            <div class="input-group">
             <select
               class="form-control"
               v-model="form.cuentaDestino"
@@ -77,19 +89,19 @@
             >
               <option disabled value="">Selecciona una cuenta</option>
               <option
-                v-for="cuenta in destinatario.cuentas"
+                v-for="(cuenta, index) in destinatario.cuentas"
                 :key="cuenta.numero"
                 :value="cuenta.numero"
               >
                 {{ cuenta.tipo.toUpperCase() }} - {{ formatAccountNumber(cuenta.numero) }}
               </option>
             </select>
+            </div>
           </div>
         </div>
       </div>
 
-      <!-- Formulario de transferencia -->
-      <div class="form-section">
+      <div class="form-section animate__animated animate__fadeIn" style="animation-delay: 0.5s">
         <form @submit.prevent="enviarTransferencia" class="transfer-form">
           <div class="form-group">
             <label for="monto" class="form-label">
@@ -132,7 +144,8 @@
       </div>
     </div>
 
-    <footer дальней class="footer">
+    <!-- Footer con animación -->
+    <footer class="footer animate__animated animate__fadeIn" style="animation-delay: 0.6s">
       © 2025 Banco Digital. Todos los derechos reservados.
     </footer>
 
@@ -154,9 +167,6 @@
               data-bs-dismiss="modal"
               aria-label="Close"
             ></button>
-          </div>
-          <div class="modal-body">
-            No tiene más de una cuenta. Registre otra cuenta para realizar transferencias.
           </div>
           <div class="modal-footer">
             <button
@@ -480,6 +490,7 @@ onMounted(() => {
   font-weight: 800;
   background: linear-gradient(to right, #3ded97, #2fa8f8);
   -webkit-background-clip: text;
+  background-clip: text; 
   -webkit-text-fill-color: transparent;
   margin-bottom: 15px;
   text-shadow: 0 0 20px rgba(61, 237, 151, 0.3);

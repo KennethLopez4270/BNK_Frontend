@@ -114,10 +114,11 @@ const hoverCard = (index) => {
 }
 
 .titulo {
-  font-size: 2.8rem;
+  font-size: 2.5rem;
   font-weight: 800;
   background: linear-gradient(to right, #3ded97, #2fa8f8);
   -webkit-background-clip: text;
+  background-clip: text; 
   -webkit-text-fill-color: transparent;
   margin-bottom: 15px;
   text-shadow: 0 0 20px rgba(61, 237, 151, 0.3);

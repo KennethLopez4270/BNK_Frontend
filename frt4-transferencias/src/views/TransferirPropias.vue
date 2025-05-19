@@ -5,7 +5,7 @@
       <i class="bi bi-arrow-left"></i> Volver
     </button>
 
-    <section class="hero">
+    <section class="hero animate__animated animate__fadeIn">
       <h1 class="titulo">Transferencia entre mis cuentas</h1>
       <p class="descripcion">
         Selecciona las cuentas y el monto para realizar tu transferencia
@@ -14,15 +14,17 @@
 
     <div class="transferencia-content">
       <div class="accounts-section">
+        <!-- Cuentas Origen -->
         <div class="accounts-column">
           <h5 class="section-title">
             <i class="bi bi-arrow-up-circle"></i> Cuenta origen
           </h5>
           <div class="cards-container">
             <div
-              class="card-accion"
-              v-for="cuenta in cuentas"
+              class="card-accion animate__animated animate__fadeInUp"
+              v-for="(cuenta, index) in cuentas"
               :key="'origen-' + cuenta.id"
+              :style="`animation-delay: ${index * 0.1}s`"
               :class="{ 'selected-origin': form.cuentaOrigen === cuenta.id }"
               @click="selectCuentaOrigen(cuenta.id)"
             >
@@ -39,15 +41,17 @@
           </div>
         </div>
 
+        <!-- Cuentas Destino -->
         <div class="accounts-column">
           <h5 class="section-title">
             <i class="bi bi-arrow-down-circle"></i> Cuenta destino
           </h5>
           <div class="cards-container">
             <div
-              class="card-accion"
-              v-for="cuenta in cuentasDestino"
+              class="card-accion animate__animated animate__fadeInUp"
+              v-for="(cuenta, index) in cuentasDestino"
               :key="'destino-' + cuenta.id"
+              :style="`animation-delay: ${index * 0.1}s`"
               :class="{ 'selected-destination': form.cuentaDestino === cuenta.numero }"
               @click="selectCuentaDestino(cuenta.numero)"
             >
@@ -109,9 +113,11 @@
       </div>
     </div>
 
-    <footer class="footer">
+    <footer class="footer animate__animated animate__fadeIn">
       © 2025 Banco Digital. Todos los derechos reservados.
     </footer>
+
+    <!-- Modal para cuenta única -->
     <div
       class="modal fade"
       id="singleAccountModal"
@@ -427,6 +433,7 @@ onMounted(() => {
   font-weight: 800;
   background: linear-gradient(to right, #3ded97, #2fa8f8);
   -webkit-background-clip: text;
+  background-clip: text; 
   -webkit-text-fill-color: transparent;
   margin-bottom: 15px;
   text-shadow: 0 0 20px rgba(61, 237, 151, 0.3);
