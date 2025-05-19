@@ -96,6 +96,13 @@
       </div>
     </section>
 
+    <!-- Botón volver -->
+      <div class="boton-volver">
+        <button @click="volver" class="btn-accion btn-secundario">
+          <i class="bi bi-arrow-left"></i> Volver
+        </button>
+      </div>
+
     <footer class="footer">
       © 2025 Gestión Premium. Todos los derechos reservados.
     </footer>
@@ -104,8 +111,12 @@
 
 <script setup>
 import { ref, computed, onMounted } from 'vue';
+import jsPDF from 'jspdf';
+import { useRouter } from 'vue-router';
 
+const router = useRouter();
 const cuentas = ref([]);
+const clientes = ref([]);
 const cuentaSeleccionada = ref(null);
 const busqueda = ref('');
 const form = ref({ amount: '' });
@@ -114,10 +125,18 @@ const mensajeError = ref(false);
 const loading = ref(false);
 const error = ref(null);
 
-onMounted(() => {
-  fetchCuentas();
-});
+// Obtener lista de clientes
+const fetchClientes = async () => {
+  try {
+    const response = await fetch('http://localhost:8081/api/clients');
+    if (!response.ok) throw new Error('Error al obtener clientes');
+    clientes.value = await response.json();
+  } catch (err) {
+    console.error('Error al cargar clientes:', err);
+  }
+};
 
+// Obtener cuentas y asociar nombres de clientes
 const fetchCuentas = async () => {
   try {
     loading.value = true;
@@ -129,17 +148,29 @@ const fetchCuentas = async () => {
       },
     });
 
-    if (!response.ok) {
-      throw new Error(`Error ${response.status}`);
-    }
+    if (!response.ok) throw new Error(`Error ${response.status}`);
 
-    cuentas.value = await response.json();
+    const cuentasData = await response.json();
+
+    // Asignar nombre del cliente a cada cuenta
+    cuentas.value = cuentasData.map((cuenta) => {
+      const cliente = clientes.value.find((c) => c.id === cuenta.clientId);
+      return {
+        ...cuenta,
+        clientName: cliente ? cliente.fullName : null,
+      };
+    });
   } catch (err) {
     error.value = 'Error al cargar las cuentas: ' + err.message;
   } finally {
     loading.value = false;
   }
 };
+
+onMounted(async () => {
+  await fetchClientes();
+  await fetchCuentas();
+});
 
 const cuentasFiltradas = computed(() => {
   if (!busqueda.value.trim()) return cuentas.value;
@@ -193,10 +224,17 @@ const extraerDinero = async () => {
     const updatedCuenta = await response.json();
     const index = cuentas.value.findIndex((c) => c.id === cuentaSeleccionada.value.id);
     if (index !== -1) {
-      cuentas.value[index] = updatedCuenta;
+      cuentas.value[index] = {
+        ...updatedCuenta,
+        clientName: cuentaSeleccionada.value.clientName, // mantener el nombre
+      };
     }
 
-    cuentaSeleccionada.value = updatedCuenta;
+    cuentaSeleccionada.value = {
+      ...updatedCuenta,
+      clientName: cuentaSeleccionada.value.clientName,
+    };
+
     mensaje.value = `Extracción de $${monto.toFixed(2)} realizada con éxito. Saldo restante: $${updatedCuenta.balance.toFixed(2)}.`;
     mensajeError.value = false;
     form.value.amount = '';
@@ -218,19 +256,26 @@ const exportarPDF = () => {
     return;
   }
 
-  const pdfContent = `
-    Comprobante de Extracción
-    ----------------------
-    Cliente: ${cuentaSeleccionada.value.clientName || 'Desconocido'}
-    Número de Cuenta: ${cuentaSeleccionada.value.accountNumber}
-    Saldo Actual: $${cuentaSeleccionada.value.balance.toFixed(2)}
-    Fecha: ${new Date().toLocaleString()}
-  `;
-  console.log('Simulación de PDF:', pdfContent);
-  mensaje.value = 'PDF generado con la información de extracción (simulado).';
+  const doc = new jsPDF();
+  const date = new Date().toLocaleString();
+
+  doc.setFontSize(16);
+  doc.text('Comprobante de Extracción', 20, 20);
+
+  doc.setFontSize(12);
+  doc.text(`Cliente: ${cuentaSeleccionada.value.clientName || 'Desconocido'}`, 20, 40);
+  doc.text(`Número de Cuenta: ${cuentaSeleccionada.value.accountNumber}`, 20, 50);
+  doc.text(`Saldo Actual: $${cuentaSeleccionada.value.balance.toFixed(2)}`, 20, 60);
+  doc.text(`Fecha: ${date}`, 20, 70);
+
+  doc.save('comprobante_extraccion.pdf');
+  mensaje.value = 'PDF generado con la información de extracción.';
   mensajeError.value = false;
 };
+
+const volver = () => router.push('/');
 </script>
+
 
 <style scoped>
 .extraer-dinero {

@@ -92,137 +92,184 @@
           </div>
         </div>
       </section>
+
+      <!-- Botón volver -->
+      <div class="boton-volver">
+        <button @click="volver" class="btn-accion btn-secundario">
+          <i class="bi bi-arrow-left"></i> Volver
+        </button>
+      </div>
   
       <footer class="footer">
         © 2025 Gestión Premium. Todos los derechos reservados.
       </footer>
     </div>
   </template>
-  
+
   <script setup>
-  import { ref, computed, onMounted } from 'vue';
-  
-  const cuentas = ref([]);
-  const cuentaSeleccionada = ref(null);
-  const busqueda = ref('');
-  const form = ref({ amount: '' });
-  const mensaje = ref('');
-  const mensajeError = ref(false);
-  const loading = ref(false);
-  const error = ref(null);
-  
-  onMounted(() => {
-    fetchCuentas();
-  });
-  
-  const fetchCuentas = async () => {
-    try {
-      loading.value = true;
-      error.value = null;
-      const response = await fetch('http://localhost:8082/api/accounts', {
-        method: 'GET',
-        headers: {
-          'Origin': 'http://localhost:5173', // Ajusta al origen de tu frontend
-        },
-      });
-  
-      if (!response.ok) {
-        throw new Error(`Error ${response.status}`);
-      }
-  
-      cuentas.value = await response.json();
-    } catch (err) {
-      error.value = 'Error al cargar las cuentas: ' + err.message;
-    } finally {
-      loading.value = false;
+import { ref, computed, onMounted } from 'vue';
+import jsPDF from 'jspdf';
+import { useRouter } from 'vue-router';
+
+const router = useRouter();
+const cuentas = ref([]);
+const clientes = ref([]);
+const cuentaSeleccionada = ref(null);
+const busqueda = ref('');
+const form = ref({ amount: '' });
+const mensaje = ref('');
+const mensajeError = ref(false);
+const loading = ref(false);
+const error = ref(null);
+
+// Cargar clientes
+const fetchClientes = async () => {
+  try {
+    const response = await fetch('http://localhost:8081/api/clients');
+    if (!response.ok) throw new Error('Error al obtener clientes');
+    clientes.value = await response.json();
+  } catch (err) {
+    console.error('Error al cargar clientes:', err);
+  }
+};
+
+// Cargar cuentas y asociar nombres de clientes
+const fetchCuentas = async () => {
+  try {
+    loading.value = true;
+    error.value = null;
+    const response = await fetch('http://localhost:8082/api/accounts', {
+      method: 'GET',
+      headers: {
+        'Origin': 'http://localhost:5173',
+      },
+    });
+
+    if (!response.ok) {
+      throw new Error(`Error ${response.status}`);
     }
-  };
-  
-  const cuentasFiltradas = computed(() => {
-    if (!busqueda.value.trim()) return cuentas.value;
-    const filtro = busqueda.value.toLowerCase();
-    return cuentas.value.filter(
-      (c) =>
-        (c.accountNumber && c.accountNumber.toLowerCase().includes(filtro)) ||
-        (c.clientName && c.clientName.toLowerCase().includes(filtro)) ||
-        (c.clientId && c.clientId.toString().includes(filtro))
+
+    const cuentasData = await response.json();
+
+    cuentas.value = cuentasData.map((cuenta) => {
+      const cliente = clientes.value.find((c) => c.id === cuenta.clientId);
+      return {
+        ...cuenta,
+        clientName: cliente ? cliente.fullName : null,
+      };
+    });
+  } catch (err) {
+    error.value = 'Error al cargar las cuentas: ' + err.message;
+  } finally {
+    loading.value = false;
+  }
+};
+
+onMounted(async () => {
+  await fetchClientes();
+  await fetchCuentas();
+});
+
+const cuentasFiltradas = computed(() => {
+  if (!busqueda.value.trim()) return cuentas.value;
+  const filtro = busqueda.value.toLowerCase();
+  return cuentas.value.filter(
+    (c) =>
+      (c.accountNumber && c.accountNumber.toLowerCase().includes(filtro)) ||
+      (c.clientName && c.clientName.toLowerCase().includes(filtro)) ||
+      (c.clientId && c.clientId.toString().includes(filtro))
+  );
+});
+
+const seleccionarCuenta = (cuenta) => {
+  cuentaSeleccionada.value = { ...cuenta };
+  mensaje.value = '';
+  mensajeError.value = false;
+  form.value.amount = '';
+};
+
+const depositarDinero = async () => {
+  const monto = form.value.amount;
+  if (monto <= 0) {
+    mensaje.value = 'El monto debe ser mayor que cero.';
+    mensajeError.value = true;
+    return;
+  }
+
+  try {
+    loading.value = true;
+    error.value = null;
+    const response = await fetch(
+      `http://localhost:8082/api/accounts/${cuentaSeleccionada.value.id}/deposit?amount=${monto}`,
+      {
+        method: 'PATCH',
+        headers: {
+          'Origin': 'http://localhost:5173',
+        },
+      }
     );
-  });
-  
-  const seleccionarCuenta = (cuenta) => {
-    cuentaSeleccionada.value = { ...cuenta };
-    mensaje.value = '';
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.message || `Error ${response.status}`);
+    }
+
+    const updatedCuenta = await response.json();
+    const cliente = clientes.value.find(c => c.id === updatedCuenta.clientId);
+
+    const cuentaConNombre = {
+      ...updatedCuenta,
+      clientName: cliente ? cliente.fullName : null,
+    };
+
+    const index = cuentas.value.findIndex((c) => c.id === cuentaSeleccionada.value.id);
+    if (index !== -1) {
+      cuentas.value[index] = cuentaConNombre;
+    }
+
+    cuentaSeleccionada.value = cuentaConNombre;
+
+    mensaje.value = `Depósito de $${monto.toFixed(2)} realizado con éxito. Nuevo saldo: $${updatedCuenta.balance.toFixed(2)}.`;
     mensajeError.value = false;
     form.value.amount = '';
-  };
-  
-  const depositarDinero = async () => {
-    const monto = form.value.amount;
-    if (monto <= 0) {
-      mensaje.value = 'El monto debe ser mayor que cero.';
-      mensajeError.value = true;
-      return;
-    }
-  
-    try {
-      loading.value = true;
-      error.value = null;
-      const response = await fetch(
-        `http://localhost:8082/api/accounts/${cuentaSeleccionada.value.id}/deposit?amount=${monto}`,
-        {
-          method: 'PATCH',
-          headers: {
-            'Origin': 'http://localhost:5173',
-          },
-        }
-      );
-  
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || `Error ${response.status}`);
-      }
-  
-      const updatedCuenta = await response.json();
-      const index = cuentas.value.findIndex((c) => c.id === cuentaSeleccionada.value.id);
-      if (index !== -1) {
-        cuentas.value[index] = updatedCuenta;
-      }
-  
-      cuentaSeleccionada.value = updatedCuenta;
-      mensaje.value = `Depósito de $${monto.toFixed(2)} realizado con éxito. Nuevo saldo: $${updatedCuenta.balance.toFixed(2)}.`;
-      mensajeError.value = false;
-      form.value.amount = '';
-    } catch (err) {
-      mensaje.value =
-        err.message.includes('400')
-          ? 'Monto inválido. Verifica e intenta nuevamente.'
-          : err.message || 'Error al realizar el depósito.';
-      mensajeError.value = true;
-    } finally {
-      loading.value = false;
-    }
-  };
-  
-  const exportarPDF = () => {
-    if (!cuentaSeleccionada.value) {
-      mensaje.value = 'Selecciona una cuenta para exportar.';
-      mensajeError.value = true;
-      return;
-    }
-  
-    const pdfContent = `
-      Comprobante de Depósito
-      ----------------------
-      Cliente: ${cuentaSeleccionada.value.clientName || 'Desconocido'}
-      Número de Cuenta: ${cuentaSeleccionada.value.accountNumber}
-      Saldo Actual: $${cuentaSeleccionada.value.balance.toFixed(2)}
-      Fecha: ${new Date().toLocaleString()}
-    `;
-    console.log('Simulación de PDF:', pdfContent);
-    mensaje.value = 'PDF generado con la información del depósito (simulado).';
-    mensajeError.value = false;
-  };
-  </script>
+  } catch (err) {
+    mensaje.value =
+      err.message.includes('400')
+        ? 'Monto inválido. Verifica e intenta nuevamente.'
+        : err.message || 'Error al realizar el depósito.';
+    mensajeError.value = true;
+  } finally {
+    loading.value = false;
+  }
+};
+
+const exportarPDF = () => {
+  if (!cuentaSeleccionada.value) {
+    mensaje.value = 'Selecciona una cuenta para exportar.';
+    mensajeError.value = true;
+    return;
+  }
+
+  const doc = new jsPDF();
+  const date = new Date().toLocaleString();
+
+  doc.setFontSize(16);
+  doc.text('Comprobante de Depósito', 20, 20);
+
+  doc.setFontSize(12);
+  doc.text(`Cliente: ${cuentaSeleccionada.value.clientName || 'Desconocido'}`, 20, 40);
+  doc.text(`Número de Cuenta: ${cuentaSeleccionada.value.accountNumber}`, 20, 50);
+  doc.text(`Saldo Actual: $${cuentaSeleccionada.value.balance.toFixed(2)}`, 20, 60);
+  doc.text(`Fecha: ${date}`, 20, 70);
+
+  doc.save('comprobante_deposito.pdf');
+  mensaje.value = 'PDF generado con la información del depósito.';
+  mensajeError.value = false;
+};
+
+const volver = () => router.push('/');
+</script>
+
   
   <style scoped>
   .depositar-dinero {
