@@ -338,23 +338,6 @@ const hoverCard = (index) => {
   height: 1px;
   background: linear-gradient(90deg, transparent, rgba(61, 237, 151, 0.5), transparent);
 }
-.bg-particles {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  pointer-events: none;
-  z-index: 0;
-}
-
-.particle {
-  position: absolute;
-  background: rgba(61, 237, 151, 0.3);
-  border-radius: 50%;
-  animation: float 15s infinite linear;
-}
-
 @keyframes float {
   0% {
     transform: translateY(0) rotate(0deg);

@@ -13,7 +13,6 @@
     </section>
 
     <div class="transferencia-content">
-      <!-- Sección de cuentas -->
       <div class="accounts-section">
         <div class="accounts-column">
           <h5 class="section-title">
@@ -113,18 +112,86 @@
     <footer class="footer">
       © 2025 Banco Digital. Todos los derechos reservados.
     </footer>
+    <div
+      class="modal fade"
+      id="singleAccountModal"
+      tabindex="-1"
+      aria-labelledby="singleAccountModalLabel"
+      aria-hidden="true"
+    >
+      <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title" id="singleAccountModalLabel">Advertencia</h5>
+            <button
+              type="button"
+              class="btn-close"
+              data-bs-dismiss="modal"
+              aria-label="Close"
+            ></button>
+          </div>
+          <div class="modal-body">
+            No tiene más de una cuenta. Registre otra cuenta para realizar transferencias.
+          </div>
+          <div class="modal-footer">
+            <button
+              type="button"
+              class="btn btn-secondary"
+              @click="volver"
+              data-bs-dismiss="modal"
+            >
+              Volver
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
 
-    <!-- Efecto de partículas -->
-    <div class="bg-particles">
-      <div v-for="i in 20" :key="i" class="particle" :style="particleStyle(i)"></div>
+    <!-- Modal para resultado de transferencia -->
+    <div
+      class="modal fade"
+      id="transferResultModal"
+      tabindex="-1"
+      aria-labelledby="transferResultModalLabel"
+      aria-hidden="true"
+    >
+      <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title" id="transferResultModalLabel">
+              {{ transferSuccess ? 'Éxito' : 'Error' }}
+            </h5>
+            <button
+              type="button"
+              class="btn-close"
+              data-bs-dismiss="modal"
+              aria-label="Close"
+            ></button>
+          </div>
+          <div class="modal-body">
+            {{ transferMessage }}
+          </div>
+          <div class="modal-footer">
+            <button
+              type="button"
+              class="btn"
+              :class="transferSuccess ? 'btn-success' : 'btn-danger'"
+              data-bs-dismiss="modal"
+            >
+              Aceptar
+            </button>
+          </div>
+        </div>
+      </div>
     </div>
   </div>
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import 'animate.css'
+import * as bootstrap from 'bootstrap'
 
 const router = useRouter()
 
@@ -140,6 +207,9 @@ const form = ref({
   cuentaDestino: null,
   monto: ''
 })
+
+const transferSuccess = ref(false)
+const transferMessage = ref('')
 
 // Cuentas destino excluyendo la cuenta origen
 const cuentasDestino = computed(() =>
@@ -170,18 +240,6 @@ function accountTypeIcon(tipo) {
 function glowColor(tipo) {
   return tipo === 'ahorro' ? 'glow-green' : 'glow-blue'
 }
-
-function particleStyle(i) {
-  return {
-    width: `${Math.random() * 10 + 5}px`,
-    height: `${Math.random() * 10 + 5}px`,
-    left: `${Math.random() * 100}%`,
-    top: `${Math.random() * 100}%`,
-    animationDelay: `${Math.random() * 15}s`,
-    animationDuration: `${Math.random() * 20 + 10}s`
-  }
-}
-
 // Funciones principales
 function selectCuentaOrigen(id) {
   form.value.cuentaOrigen = id
@@ -197,7 +255,6 @@ function volver() {
 }
 
 function generarComprobante() {
-  // Aquí iría la lógica para generar el comprobante
   const comprobante = {
     origen: cuentas.value.find(c => c.id === parseInt(form.value.cuentaOrigen)),
     destino: cuentas.value.find(c => c.numero === form.value.cuentaDestino),
@@ -206,7 +263,6 @@ function generarComprobante() {
     codigo: `TRF-${Math.floor(Math.random() * 1000000)}`
   }
   
-  // Navegar a la vista de comprobante con los datos
   router.push({
     name: 'ComprobanteTransferencia',
     params: { id: comprobante.codigo },
@@ -214,11 +270,57 @@ function generarComprobante() {
   })
 }
 
-function enviarTransferencia() {
-  generarComprobante() // Por ahora redirige al comprobante
-}
-</script>
+async function enviarTransferencia() {
+  const origen = cuentas.value.find(c => c.id === parseInt(form.value.cuentaOrigen))
+  const monto = parseFloat(form.value.monto)
+  const modal = new bootstrap.Modal(document.getElementById('transferResultModal'))
 
+  // Validar saldo suficiente
+  if (origen.saldo < monto) {
+    transferSuccess.value = false
+    transferMessage.value = 'Saldo insuficiente para realizar la transferencia.'
+    modal.show()
+    return
+  }
+
+  try {
+    const destino = cuentas.value.find(c => c.numero === form.value.cuentaDestino)
+    origen.saldo -= monto
+    destino.saldo += monto
+
+    const transfer = {
+      id: Math.floor(Math.random() * 1000000),
+      origin_account_id: form.value.cuentaOrigen,
+      destination_account_number: form.value.cuentaDestino,
+      destination_bank: 'propio',
+      amount: monto,
+      transfer_date: new Date().toISOString(),
+      status: 'completado'
+    }
+
+    transferSuccess.value = true
+    transferMessage.value = 'Transferencia realizada con éxito.'
+    modal.show()
+
+    // Limpiar formulario
+    form.value.monto = ''
+    form.value.cuentaOrigen = null
+    form.value.cuentaDestino = null
+  } catch (error) {
+    transferSuccess.value = false
+    transferMessage.value = 'Error al procesar la transferencia. Intente nuevamente.'
+    modal.show()
+  }
+}
+
+// Verificar número de cuentas al montar el componente
+onMounted(() => {
+  if (cuentas.value.length <= 1) {
+    const modal = new bootstrap.Modal(document.getElementById('singleAccountModal'))
+    modal.show()
+  }
+})
+</script>
 <style scoped>
 @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
 
@@ -234,7 +336,50 @@ function enviarTransferencia() {
   overflow-x: hidden;
   position: relative;
 }
+/* Estilos de los modales */
+.modal-content {
+  background: rgba(15, 23, 42, 0.9);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(61, 237, 151, 0.3);
+  color: #fff;
+}
 
+.modal-header {
+  border-bottom: 1px solid rgba(61, 237, 151, 0.2);
+}
+
+.modal-title {
+  color: #3ded97;
+}
+
+.modal-body {
+  color: #a0a8c0;
+}
+
+.modal-footer {
+  border-top: 1px solid rgba(61, 237, 151, 0.2);
+}
+
+.btn-close {
+  filter: invert(1);
+}
+.back-button {
+  position: absolute;
+  top: 20px;
+  left: 20px;
+  background: rgba(255, 255, 255, 0.1);
+  border: none;
+  color: #fff;
+  padding: 8px 15px;
+  border-radius: 20px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  transition: all 0.3s;
+  backdrop-filter: blur(5px);
+  z-index: 10;
+}
 .back-button {
   position: absolute;
   top: 20px;
