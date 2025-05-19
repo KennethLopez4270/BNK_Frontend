@@ -1,39 +1,53 @@
 <template>
-  <div class="obtener-prestamos">
-    <section class="hero">
+  <div class="prestamos-app">
+    <section class="hero animate__animated animate__fadeIn">
       <h1 class="titulo">Consulta de Préstamos</h1>
-      <p class="descripcion">Visualiza y filtra todos los préstamos del sistema</p>
+      <p class="descripcion">
+        Visualiza y filtra todos los préstamos del sistema
+      </p>
     </section>
 
-    <!-- Buscador -->
-    <section class="filtros">
-      <div class="filtros-container">
-        <input
-          v-model="filtroCliente"
-          type="text"
-          class="input-filtro"
-          placeholder="Buscar por ID de cliente"
-        />
+    <section class="filtros-container animate__animated animate__fadeInUp">
+      <div class="filtros">
+        <div class="input-group">
+          <i class="bi bi-search icono-input"></i>
+          <input
+            v-model="filtroCliente"
+            type="text"
+            class="input-busqueda"
+            placeholder="Buscar por ID de cliente"
+          />
+        </div>
       </div>
     </section>
 
-    <!-- Mensajes de estado -->
-    <div v-if="loading" class="cargando">Cargando préstamos...</div>
-    <div v-if="error" class="error">{{ error }}</div>
+    <div v-if="loading" class="cargando">
+      <i class="bi bi-arrow-repeat"></i> Cargando préstamos...
+    </div>
+    
+    <div v-if="error" class="mensaje error">
+      <i class="bi bi-exclamation-triangle"></i> {{ error }}
+    </div>
 
-    <!-- Tabla de préstamos -->
-    <section class="tabla-container" v-else>
+    <section v-else class="tabla-container animate__animated animate__fadeInUp">
       <div v-if="prestamosFiltrados.length" class="tabla-scroll">
         <table class="tabla-prestamos">
           <thead>
             <tr>
-              <th @click="ordenarPor('id')">ID Préstamo <i :class="`bi bi-arrow-${orden.id}`"></i></th>
-              <th @click="ordenarPor('client_id')">ID Cliente <i :class="`bi bi-arrow-${orden.client_id}`"></i></th>
-              <th @click="ordenarPor('loan_amount')">Monto <i :class="`bi bi-arrow-${orden.loan_amount}`"></i></th>
-              <th @click="ordenarPor('interest_rate')">Tasa % <i :class="`bi bi-arrow-${orden.interest_rate}`"></i></th>
-              <th @click="ordenarPor('term_months')">Plazo <i :class="`bi bi-arrow-${orden.term_months}`"></i></th>
-              <th @click="ordenarPor('monthly_payment')">Cuota <i :class="`bi bi-arrow-${orden.monthly_payment}`"></i></th>
-              <th @click="ordenarPor('status')">Estado <i :class="`bi bi-arrow-${orden.status}`"></i></th>
+              <th 
+                v-for="columna in columnas" 
+                :key="columna.campo" 
+                @click="ordenarPor(columna.campo)"
+                class="sortable-header"
+              >
+                <div class="header-content">
+                  <span>{{ columna.titulo }}</span>
+                  <i class="bi" :class="{
+                    'bi-arrow-up': campoOrden === columna.campo && orden[columna.campo] === 'up',
+                    'bi-arrow-down': campoOrden === columna.campo && orden[columna.campo] === 'down'
+                  }"></i>
+                </div>
+              </th>
               <th>Acciones</th>
             </tr>
           </thead>
@@ -47,7 +61,8 @@
               <td>${{ prestamo.monthly_payment.toFixed(2) }}</td>
               <td>
                 <span :class="`estado ${prestamo.status}`">
-                  {{ prestamo.status }}
+                  <i :class="`bi ${getEstadoIcon(prestamo.status)}`"></i>
+                  {{ formatEstado(prestamo.status) }}
                 </span>
               </td>
               <td class="acciones">
@@ -64,18 +79,16 @@
       </div>
 
       <div v-else class="sin-resultados">
-        No se encontraron préstamos con los filtros aplicados.
+        <i class="bi bi-exclamation-circle"></i> No se encontraron préstamos con los filtros aplicados
       </div>
     </section>
 
-    <!-- Botón volver -->
     <div class="boton-volver">
       <button @click="volver" class="btn-accion btn-secundario">
         <i class="bi bi-arrow-left"></i> Volver
       </button>
     </div>
 
-    <!-- Modal Detalles -->
     <div v-if="mostrarModal" class="modal-overlay" @click="mostrarModal = false">
       <div class="modal-contenido" @click.stop>
         <h3>Detalles del Préstamo #{{ prestamoSeleccionado?.id }}</h3>
@@ -103,31 +116,37 @@
           </div>
           <div class="detalle-item">
             <span class="detalle-etiqueta">Fecha inicio:</span>
-            <span class="detalle-valor">{{ prestamoSeleccionado.start_date || 'N/A' }}</span>
+            <span class="detalle-valor">{{ formatFecha(prestamoSeleccionado.start_date) || 'N/A' }}</span>
           </div>
           <div class="detalle-item">
             <span class="detalle-etiqueta">Fecha fin:</span>
-            <span class="detalle-valor">{{ prestamoSeleccionado.end_date || 'N/A' }}</span>
+            <span class="detalle-valor">{{ formatFecha(prestamoSeleccionado.end_date) || 'N/A' }}</span>
           </div>
           <div class="detalle-item">
             <span class="detalle-etiqueta">Estado:</span>
             <span :class="`estado ${prestamoSeleccionado.status}`">
-              {{ prestamoSeleccionado.status }}
+              <i :class="`bi ${getEstadoIcon(prestamoSeleccionado.status)}`"></i>
+              {{ formatEstado(prestamoSeleccionado.status) }}
             </span>
           </div>
         </div>
 
         <button @click="mostrarModal = false" class="btn-accion">
-          Cerrar
+          <i class="bi bi-x-lg"></i> Cerrar
         </button>
       </div>
     </div>
+
+    <footer class="footer animate__animated animate__fadeIn">
+      © 2025 Banco Digital. Todos los derechos reservados.
+    </footer>
   </div>
 </template>
 
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
+import 'animate.css'
 
 const router = useRouter()
 
@@ -177,6 +196,16 @@ const datosEstaticos = [
     end_date: '2026-04-05',
     status: 'activo'
   }
+]
+
+const columnas = [
+  { titulo: 'ID Préstamo', campo: 'id' },
+  { titulo: 'ID Cliente', campo: 'client_id' },
+  { titulo: 'Monto', campo: 'loan_amount' },
+  { titulo: 'Tasa %', campo: 'interest_rate' },
+  { titulo: 'Plazo', campo: 'term_months' },
+  { titulo: 'Cuota', campo: 'monthly_payment' },
+  { titulo: 'Estado', campo: 'status' }
 ]
 
 const prestamos = ref([])
@@ -263,194 +292,295 @@ const verDetalles = (prestamo) => {
 }
 
 const volver = () => router.push('/')
+
+const getEstadoIcon = (estado) => {
+  const icons = {
+    activo: 'bi-check-circle',
+    pendiente: 'bi-hourglass',
+    rechazado: 'bi-x-circle',
+    pagado: 'bi-coin'
+  }
+  return icons[estado] || 'bi-question-circle'
+}
+
+const formatEstado = (estado) => {
+  const estados = {
+    activo: 'Activo',
+    pendiente: 'Pendiente',
+    rechazado: 'Rechazado',
+    pagado: 'Pagado'
+  }
+  return estados[estado] || estado
+}
+
+const formatFecha = (fecha) => {
+  if (!fecha) return null
+  return new Date(fecha).toLocaleDateString('es-ES')
+}
 </script>
 
 <style scoped>
-.obtener-prestamos {
-  font-family: 'Segoe UI', sans-serif;
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
+
+.prestamos-app {
+  font-family: 'Poppins', sans-serif;
   color: #fff;
-  background: linear-gradient(to bottom, #122523, #000);
+  background: linear-gradient(135deg, #0f2027, #203a43, #2c5364);
   min-height: 100vh;
   display: flex;
   flex-direction: column;
   align-items: center;
   padding: 20px;
+  overflow-x: hidden;
 }
 
 .hero {
-  padding: 60px 20px 40px;
+  padding: 80px 20px 50px;
   text-align: center;
+  position: relative;
+  width: 100%;
+  max-width: 1200px;
+}
+
+.hero::after {
+  content: '';
+  position: absolute;
+  bottom: 30px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 100px;
+  height: 3px;
+  background: linear-gradient(90deg, transparent, #3ded97, transparent);
 }
 
 .titulo {
-  font-size: 2.5rem;
+  font-size: clamp(1.8rem, 5vw, 2.8rem);
   font-weight: 800;
-  color: #3ded97;
+  background: linear-gradient(to right, #3ded97, #2fa8f8);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
   margin-bottom: 15px;
-  text-shadow: 0 0 10px rgba(61, 237, 151, 0.5);
+  text-shadow: 0 0 20px rgba(61, 237, 151, 0.3);
+  letter-spacing: 1px;
 }
 
 .descripcion {
-  font-size: 1.2rem;
-  color: #ccc;
+  font-size: clamp(1.1rem, 2.5vw, 1.3rem);
+  color: #a0a8c0;
   max-width: 600px;
   margin: 0 auto;
-}
-
-.filtros {
-  width: 100%;
-  max-width: 1000px;
-  margin-bottom: 30px;
+  line-height: 1.6;
 }
 
 .filtros-container {
-  background: rgba(0, 0, 0, 0.7);
-  padding: 20px;
-  border-radius: 15px;
-  box-shadow: 0 0 20px rgba(61, 237, 151, 0.1);
+  width: 100%;
+  max-width: 1100px;
+  margin-bottom: 30px;
 }
 
-.input-filtro {
+.filtros {
+  background: rgba(15, 23, 42, 0.7);
+  backdrop-filter: blur(10px);
+  border-radius: 15px;
+  padding: 20px;
+  border: 1px solid rgba(61, 237, 151, 0.1);
+}
+
+.input-group {
+  position: relative;
+  max-width: 400px;
+  margin: 0 auto;
+}
+
+.icono-input {
+  position: absolute;
+  left: 15px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #3ded97;
+  font-size: 1.2rem;
+}
+
+.input-busqueda {
   width: 100%;
-  padding: 12px 15px;
-  border: 1px solid #3ded97;
-  border-radius: 8px;
-  background-color: rgba(0, 0, 0, 0.5);
+  padding: 12px 15px 12px 45px;
+  border: 1px solid rgba(61, 237, 151, 0.3);
+  border-radius: 10px;
+  background-color: rgba(255, 255, 255, 0.05);
   color: #fff;
   font-size: 1rem;
+  transition: all 0.3s;
+}
+
+.input-busqueda:focus {
+  outline: none;
+  border-color: #3ded97;
+  box-shadow: 0 0 0 2px rgba(61, 237, 151, 0.2);
 }
 
 .tabla-container {
   width: 100%;
-  max-width: 1200px;
-  background: rgba(0, 0, 0, 0.7);
+  max-width: 1100px;
+  background: rgba(15, 23, 42, 0.7);
+  backdrop-filter: blur(10px);
   border-radius: 15px;
   padding: 20px;
-  margin-bottom: 30px;
-  box-shadow: 0 0 20px rgba(61, 237, 151, 0.1);
+  border: 1px solid rgba(61, 237, 151, 0.1);
+  box-shadow: 0 15px 30px rgba(61, 237, 151, 0.05);
+  margin-bottom: 40px;
 }
 
 .tabla-scroll {
   overflow-x: auto;
+  border-radius: 10px;
 }
 
 .tabla-prestamos {
   width: 100%;
   border-collapse: collapse;
+  background: rgba(15, 23, 42, 0.5);
+  border-radius: 10px;
+  overflow: hidden;
 }
 
-.tabla-prestamos th, 
+.tabla-prestamos th,
 .tabla-prestamos td {
   padding: 15px;
   text-align: left;
-  border-bottom: 1px solid #333;
+  border-bottom: 1px solid rgba(61, 237, 151, 0.1);
 }
 
 .tabla-prestamos th {
   color: #3ded97;
   font-weight: 600;
+  background: rgba(15, 23, 42, 0.8);
+}
+
+.sortable-header {
   cursor: pointer;
-  user-select: none;
-  position: relative;
+  transition: background-color 0.3s;
 }
 
-.tabla-prestamos th:hover {
-  background-color: rgba(61, 237, 151, 0.1);
+.sortable-header:hover {
+  background-color: rgba(61, 237, 151, 0.1) !important;
 }
 
-.tabla-prestamos th i {
-  margin-left: 5px;
-}
-
-.tabla-prestamos tbody tr:hover {
-  background-color: rgba(255, 255, 255, 0.05);
-}
-
-.estado {
-  padding: 5px 10px;
-  border-radius: 20px;
-  font-size: 0.9rem;
-  font-weight: 600;
-}
-
-.estado.activo {
-  background-color: rgba(40, 167, 69, 0.2);
-  color: #28a745;
-}
-
-.estado.pendiente {
-  background-color: rgba(255, 193, 7, 0.2);
-  color: #ffc107;
-}
-
-.estado.rechazado {
-  background-color: rgba(220, 53, 69, 0.2);
-  color: #dc3545;
-}
-
-.estado.pagado {
-  background-color: rgba(23, 162, 184, 0.2);
-  color: #17a2b8;
-}
-
-.acciones {
-  display: flex;
-  justify-content: center;
-  gap: 10px;
-}
-
-.btn-accion {
-  background-color: #3ded97;
-  color: #fff;
-  padding: 12px 25px;
-  font-size: 1rem;
-  border: none;
-  border-radius: 30px;
-  cursor: pointer;
-  box-shadow: 0 0 10px #3ded97;
-  transition: 0.3s;
+.header-content {
   display: flex;
   align-items: center;
   gap: 8px;
 }
 
+.tabla-prestamos tbody tr {
+  transition: all 0.3s;
+}
+
+.tabla-prestamos tbody tr:hover {
+  background-color: rgba(61, 237, 151, 0.05);
+}
+
+.estado {
+  padding: 8px 12px;
+  border-radius: 20px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.estado.activo {
+  background: rgba(61, 237, 151, 0.2);
+  color: #3ded97;
+}
+
+.estado.pendiente {
+  background: rgba(255, 193, 7, 0.2);
+  color: #ffc107;
+}
+
+.estado.rechazado {
+  background: rgba(244, 63, 94, 0.2);
+  color: #f43f5e;
+}
+
+.estado.pagado {
+  background: rgba(99, 102, 241, 0.2);
+  color: #6366f1;
+}
+
+.acciones {
+  display: flex;
+  justify-content: center;
+}
+
+.btn-accion {
+  background: linear-gradient(135deg, #3ded97, #2fa8f8);
+  color: #fff;
+  padding: 10px 20px;
+  font-size: 0.95rem;
+  border: none;
+  border-radius: 30px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  transition: all 0.3s;
+  box-shadow: 0 0 15px rgba(61, 237, 151, 0.3);
+}
+
 .btn-accion:hover {
-  background-color: #24d26a;
+  transform: translateY(-2px);
+  box-shadow: 0 5px 20px rgba(61, 237, 151, 0.5);
 }
 
 .btn-pequeno {
-  padding: 8px 15px;
-  font-size: 0.9rem;
+  padding: 6px 12px;
+  font-size: 0.85rem;
 }
 
 .btn-secundario {
-  background-color: #6c757d;
-  box-shadow: 0 0 10px #6c757d;
+  background: rgba(255, 255, 255, 0.1);
+  box-shadow: 0 0 10px rgba(255, 255, 255, 0.1);
 }
 
 .btn-secundario:hover {
-  background-color: #5a6268;
+  background: rgba(255, 255, 255, 0.2);
 }
 
-.sin-resultados {
+.cargando,
+.sin-resultados,
+.mensaje {
+  padding: 20px;
+  border-radius: 10px;
   text-align: center;
-  padding: 30px;
-  color: #ccc;
   font-size: 1.1rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  margin: 20px 0;
 }
 
 .cargando {
-  text-align: center;
-  padding: 30px;
-  color: #ccc;
-  font-size: 1.1rem;
+  color: #a0a8c0;
 }
 
-.error {
-  text-align: center;
-  padding: 30px;
-  color: #ff4d4d;
-  font-size: 1.1rem;
+.sin-resultados {
+  color: #a0a8c0;
+  background: rgba(15, 23, 42, 0.5);
+  border: 1px solid rgba(61, 237, 151, 0.1);
+}
+
+.mensaje {
+  background: rgba(61, 237, 151, 0.2);
+  border: 1px solid rgba(61, 237, 151, 0.5);
+}
+
+.mensaje.error {
+  background: rgba(244, 63, 94, 0.2);
+  border: 1px solid rgba(244, 63, 94, 0.5);
+  color: #f43f5e;
 }
 
 .boton-volver {
@@ -471,12 +601,13 @@ const volver = () => router.push('/')
 }
 
 .modal-contenido {
-  background: linear-gradient(to bottom, #122523, #000);
+  background: rgba(15, 23, 42, 0.9);
+  backdrop-filter: blur(10px);
   padding: 30px;
   border-radius: 15px;
   width: 90%;
   max-width: 600px;
-  border: 1px solid #3ded97;
+  border: 1px solid rgba(61, 237, 151, 0.3);
   box-shadow: 0 0 30px rgba(61, 237, 151, 0.3);
   text-align: center;
 }
@@ -495,8 +626,8 @@ const volver = () => router.push('/')
 .detalle-item {
   display: flex;
   justify-content: space-between;
-  padding: 10px 0;
-  border-bottom: 1px solid #333;
+  padding: 12px 0;
+  border-bottom: 1px solid rgba(61, 237, 151, 0.1);
 }
 
 .detalle-etiqueta {
@@ -508,20 +639,81 @@ const volver = () => router.push('/')
   color: #fff;
 }
 
+.footer {
+  margin-top: auto;
+  padding: 40px 0 30px;
+  font-size: 0.9rem;
+  color: #6b7280;
+  text-align: center;
+  position: relative;
+  width: 100%;
+}
+
+.footer::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 200px;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(61, 237, 151, 0.5), transparent);
+}
+
 @media (max-width: 768px) {
-  .tabla-prestamos th, 
+  .tabla-prestamos th,
   .tabla-prestamos td {
-    padding: 10px 5px;
+    padding: 12px 8px;
     font-size: 0.9rem;
   }
   
-  .titulo {
-    font-size: 2rem;
+  .header-content {
+    flex-direction: column;
+    gap: 2px;
+    align-items: flex-start;
   }
   
   .detalle-item {
     flex-direction: column;
     gap: 5px;
+  }
+}
+
+@media (max-width: 480px) {
+  .tabla-prestamos {
+    display: block;
+  }
+  
+  .tabla-prestamos thead {
+    display: none;
+  }
+  
+  .tabla-prestamos tbody tr {
+    display: block;
+    margin-bottom: 15px;
+    border: 1px solid rgba(61, 237, 151, 0.2);
+    border-radius: 8px;
+    padding: 10px;
+  }
+  
+  .tabla-prestamos tbody td {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 10px;
+    border: none;
+  }
+  
+  .tabla-prestamos tbody td::before {
+    content: attr(data-label);
+    font-weight: 600;
+    color: #3ded97;
+    margin-right: 15px;
+  }
+  
+  .sin-resultados,
+  .mensaje {
+    padding: 15px;
   }
 }
 </style>

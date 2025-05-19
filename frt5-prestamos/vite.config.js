@@ -10,7 +10,7 @@ export default defineConfig({
       name: 'prestamos',
       filename: 'remoteEntry.js',
       exposes: {
-        './PrestamosApp': './src/views/HomePrestamos.vue' // o cambiar este según se necesite
+        './HomePrestamos': './src/views/HomePrestamos.vue', './PrestamosApp': './src/AppPrestamos.vue'
       },
       shared: ['vue']
     })
@@ -19,6 +19,13 @@ export default defineConfig({
     target: 'esnext'
   },
   server: {
-    port: 5177
+    port: 5177,
+    fs: {
+    allow: ['.'] // asegura que vite sirva archivos fuera de src/
+  }
+  },
+  optimizeDeps: {
+    exclude: ['vue']
   }
 })
+// frt5-prestamos/vite.config.js

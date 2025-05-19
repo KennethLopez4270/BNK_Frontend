@@ -1,98 +1,122 @@
 <template>
-  <div class="crear-prestamo">
-    <section class="hero">
+  <div class="prestamos-app">
+    <section class="hero animate__animated animate__fadeIn">
       <h1 class="titulo">Solicitar Nuevo Préstamo</h1>
       <p class="descripcion">Complete el formulario para solicitar un nuevo préstamo</p>
     </section>
 
-    <section class="formulario-container">
-      <form @submit.prevent="solicitarPrestamo" class="form-prestamo">
-        <div class="form-columnas">
-          <div class="form-grupo">
-            <label>ID del Cliente</label>
-            <input
-              v-model="form.client_id"
-              type="number"
-              class="input-field"
-              placeholder="Ej: 123"
-              required
-            />
+    <section class="formulario-container animate__animated animate__fadeInUp">
+      <div class="formulario-modificacion">
+        <h2 class="subtitulo">
+          <i class="bi bi-file-earmark-plus"></i> Nueva Solicitud de Préstamo
+        </h2>
+
+        <form @submit.prevent="solicitarPrestamo" class="form-modificar">
+          <div class="form-columnas">
+            <div class="campo">
+              <div class="input-group">
+                <i class="bi bi-person-vcard icono-input"></i>
+                <input
+                  v-model="form.client_id"
+                  type="number"
+                  class="input-text"
+                  placeholder="ID del Cliente (Ej: 123)"
+                  required
+                />
+              </div>
+            </div>
+
+            <div class="campo">
+              <div class="input-group">
+                <i class="bi bi-cash-stack icono-input"></i>
+                <input
+                  v-model.number="form.loan_amount"
+                  type="number"
+                  min="100"
+                  step="0.01"
+                  class="input-text"
+                  placeholder="Monto del Préstamo (Ej: 5000.00)"
+                  required
+                />
+              </div>
+            </div>
           </div>
 
-          <div class="form-grupo">
-            <label>Monto del Préstamo ($)</label>
-            <input
-              v-model.number="form.loan_amount"
-              type="number"
-              min="100"
-              step="0.01"
-              class="input-field"
-              placeholder="Ej: 5000.00"
-              required
-            />
+          <div class="form-columnas">
+            <div class="campo">
+              <div class="input-group">
+                <i class="bi bi-percent icono-input"></i>
+                <input
+                  v-model.number="form.interest_rate"
+                  type="number"
+                  min="1"
+                  max="30"
+                  step="0.1"
+                  class="input-text"
+                  placeholder="Tasa de Interés (Ej: 5.5)"
+                  required
+                />
+              </div>
+            </div>
+
+            <div class="campo">
+              <div class="input-group">
+                <i class="bi bi-calendar-month icono-input"></i>
+                <input
+                  v-model.number="form.term_months"
+                  type="number"
+                  min="1"
+                  max="120"
+                  class="input-text"
+                  placeholder="Plazo en meses (Ej: 12)"
+                  required
+                />
+              </div>
+            </div>
           </div>
-        </div>
 
-        <div class="form-columnas">
-          <div class="form-grupo">
-            <label>Tasa de Interés (%)</label>
-            <input
-              v-model.number="form.interest_rate"
-              type="number"
-              min="1"
-              max="30"
-              step="0.1"
-              class="input-field"
-              placeholder="Ej: 5.5"
-              required
-            />
+          <div class="campo">
+            <div class="input-group">
+              <i class="bi bi-calendar-date icono-input"></i>
+              <input
+                v-model="form.start_date"
+                type="date"
+                class="input-text"
+                required
+              />
+            </div>
           </div>
 
-          <div class="form-grupo">
-            <label>Plazo (meses)</label>
-            <input
-              v-model.number="form.term_months"
-              type="number"
-              min="1"
-              max="120"
-              class="input-field"
-              placeholder="Ej: 12"
-              required
-            />
+          <div class="botones-form">
+            <button 
+              type="submit" 
+              class="btn-accion btn-guardar"
+              :disabled="loading"
+            >
+              <i class="bi" :class="loading ? 'bi-arrow-repeat' : 'bi-check-circle'"></i> 
+              {{ loading ? 'Procesando...' : 'Solicitar Préstamo' }}
+            </button>
+            <button
+              type="button"
+              @click="calcularPagoMensual"
+              class="btn-accion btn-secundario"
+            >
+              <i class="bi bi-calculator"></i> Calcular Pago Mensual
+            </button>
           </div>
-        </div>
 
-        <div class="form-grupo">
-          <label>Fecha de Inicio</label>
-          <input
-            v-model="form.start_date"
-            type="date"
-            class="input-field"
-            required
-          />
-        </div>
+          <div v-if="pagoMensual" class="resultado-calculo">
+            <p><i class="bi bi-currency-dollar"></i> Pago mensual estimado: 
+              <strong>${{ pagoMensual.toFixed(2) }}</strong>
+            </p>
+          </div>
 
-        <div class="botones-form">
-          <button type="submit" class="btn-accion" :disabled="loading">
-            <i class="bi bi-check-circle"></i> {{ loading ? 'Procesando...' : 'Solicitar Préstamo' }}
-          </button>
-          <button
-            type="button"
-            @click="calcularPagoMensual"
-            class="btn-accion btn-secundario"
-          >
-            <i class="bi bi-calculator"></i> Calcular Pago Mensual
-          </button>
-        </div>
-
-        <div v-if="pagoMensual" class="resultado-calculo">
-          <p>Pago mensual estimado: <strong>${{ pagoMensual.toFixed(2) }}</strong></p>
-        </div>
-
-        <div v-if="mensaje" :class="['mensaje', mensajeError ? 'error' : 'exito']">
-          {{ mensaje }}
-        </div>
-      </form>
+          <div v-if="mensaje" class="mensaje" :class="{ 'error': mensajeError }">
+            <i class="bi" :class="mensajeError ? 'bi-exclamation-triangle' : 'bi-check-circle'"></i>
+            {{ mensaje }}
+          </div>
+        </form>
+      </div>
     </section>
 
     <div class="boton-volver">
@@ -100,6 +124,10 @@
         <i class="bi bi-arrow-left"></i> Volver
       </button>
     </div>
+
+    <footer class="footer animate__animated animate__fadeIn">
+      © 2025 Banco Digital. Todos los derechos reservados.
+    </footer>
   </div>
 </template>
 
@@ -206,50 +234,89 @@ const volver = () => router.push('/')
 </script>
 
 <style scoped>
-.crear-prestamo {
-  font-family: 'Segoe UI', sans-serif;
+/* Estilos base del contenedor principal */
+.prestamos-app {
+  font-family: 'Poppins', sans-serif;
   color: #fff;
-  background: linear-gradient(to bottom, #122523, #000);
+  background: linear-gradient(135deg, #0f2027, #203a43, #2c5364);
   min-height: 100vh;
   display: flex;
   flex-direction: column;
   align-items: center;
   padding: 20px;
+  overflow-x: hidden;
 }
 
+/* Estilos para la sección hero */
 .hero {
-  padding: 60px 20px 40px;
+  padding: 80px 20px 50px;
   text-align: center;
+  position: relative;
+  width: 100%;
+  max-width: 1200px;
+}
+
+.hero::after {
+  content: '';
+  position: absolute;
+  bottom: 30px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 100px;
+  height: 3px;
+  background: linear-gradient(90deg, transparent, #3ded97, transparent);
 }
 
 .titulo {
-  font-size: 2.5rem;
+  font-size: clamp(1.8rem, 5vw, 2.8rem);
   font-weight: 800;
-  color: #3ded97;
+  background: linear-gradient(to right, #3ded97, #2fa8f8);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
   margin-bottom: 15px;
+  text-shadow: 0 0 20px rgba(61, 237, 151, 0.3);
+  letter-spacing: 1px;
 }
 
 .descripcion {
-  font-size: 1.2rem;
-  color: #ccc;
+  font-size: clamp(1.1rem, 2.5vw, 1.3rem);
+  color: #a0a8c0;
   max-width: 600px;
   margin: 0 auto;
+  line-height: 1.6;
 }
 
+/* Estilos para el formulario */
 .formulario-container {
   width: 100%;
   max-width: 800px;
-  background: rgba(0, 0, 0, 0.7);
-  padding: 30px;
-  border-radius: 15px;
-  box-shadow: 0 0 20px rgba(61, 237, 151, 0.1);
-  margin-bottom: 30px;
+  margin-bottom: 40px;
 }
 
-.form-prestamo {
+.formulario-modificacion {
+  background: rgba(15, 23, 42, 0.7);
+  backdrop-filter: blur(10px);
+  border-radius: 15px;
+  padding: 30px;
+  border: 1px solid rgba(61, 237, 151, 0.1);
+  box-shadow: 0 15px 30px rgba(61, 237, 151, 0.05);
+}
+
+.subtitulo {
+  font-size: 1.5rem;
+  color: #3ded97;
+  margin-bottom: 25px;
+  text-align: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+}
+
+.form-modificar {
   display: flex;
   flex-direction: column;
-  gap: 20px;
+  gap: 25px;
 }
 
 .form-columnas {
@@ -258,32 +325,41 @@ const volver = () => router.push('/')
   gap: 20px;
 }
 
-.form-grupo {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
+.campo {
+  margin-bottom: 15px;
 }
 
-.form-grupo label {
+.input-group {
+  position: relative;
+}
+
+.icono-input {
+  position: absolute;
+  left: 15px;
+  top: 50%;
+  transform: translateY(-50%);
   color: #3ded97;
-  font-weight: 600;
+  font-size: 1.2rem;
 }
 
-.input-field {
-  padding: 12px 15px;
-  border: 1px solid #3ded97;
-  border-radius: 8px;
-  background-color: rgba(0, 0, 0, 0.5);
+.input-text {
+  width: 100%;
+  padding: 15px 15px 15px 45px;
+  border: 1px solid rgba(61, 237, 151, 0.3);
+  border-radius: 10px;
+  background-color: rgba(255, 255, 255, 0.05);
   color: #fff;
   font-size: 1rem;
-  width: 100%;
+  transition: all 0.3s;
 }
 
-.input-field:focus {
+.input-text:focus {
   outline: none;
-  box-shadow: 0 0 5px #3ded97;
+  border-color: #3ded97;
+  box-shadow: 0 0 0 2px rgba(61, 237, 151, 0.2);
 }
 
+/* Estilos para los botones */
 .botones-form {
   display: flex;
   justify-content: center;
@@ -292,46 +368,56 @@ const volver = () => router.push('/')
 }
 
 .btn-accion {
-  background-color: #3ded97;
+  background: linear-gradient(135deg, #3ded97, #2fa8f8);
   color: #fff;
   padding: 12px 25px;
   font-size: 1rem;
   border: none;
   border-radius: 30px;
   cursor: pointer;
-  box-shadow: 0 0 10px #3ded97;
-  transition: 0.3s;
   display: flex;
   align-items: center;
   gap: 8px;
+  transition: all 0.3s;
+  box-shadow: 0 0 15px rgba(61, 237, 151, 0.3);
 }
 
 .btn-accion:hover {
-  background-color: #24d26a;
+  transform: translateY(-2px);
+  box-shadow: 0 5px 20px rgba(61, 237, 151, 0.5);
 }
 
-.btn-accion:disabled {
-  background-color: #6c757d;
+.btn-guardar {
+  background: linear-gradient(135deg, #3ded97, #2fa8f8);
+}
+
+.btn-guardar:disabled {
+  background: rgba(108, 117, 125, 0.5);
   box-shadow: none;
   cursor: not-allowed;
 }
 
 .btn-secundario {
-  background-color: #6c757d;
-  box-shadow: 0 0 10px #6c757d;
+  background: rgba(255, 255, 255, 0.1);
+  box-shadow: 0 0 10px rgba(255, 255, 255, 0.1);
 }
 
 .btn-secundario:hover {
-  background-color: #5a6268;
+  background: rgba(255, 255, 255, 0.2);
 }
 
+/* Estilos para el resultado del cálculo */
 .resultado-calculo {
   text-align: center;
   padding: 15px;
-  background-color: rgba(61, 237, 151, 0.1);
+  background: rgba(61, 237, 151, 0.1);
   border-radius: 8px;
-  border: 1px solid #3ded97;
+  border: 1px solid rgba(61, 237, 151, 0.3);
   margin-top: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
 }
 
 .resultado-calculo p {
@@ -344,29 +430,53 @@ const volver = () => router.push('/')
   color: #3ded97;
 }
 
+/* Estilos para mensajes */
 .mensaje {
   padding: 15px;
   border-radius: 8px;
-  margin-top: 20px;
   text-align: center;
-}
-
-.mensaje.exito {
-  background-color: rgba(40, 167, 69, 0.2);
-  color: #28a745;
-  border: 1px solid #28a745;
+  font-size: 1.1rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  background: rgba(61, 237, 151, 0.2);
+  border: 1px solid rgba(61, 237, 151, 0.5);
 }
 
 .mensaje.error {
-  background-color: rgba(220, 53, 69, 0.2);
-  color: #dc3545;
-  border: 1px solid #dc3545;
+  background: rgba(244, 63, 94, 0.2);
+  border: 1px solid rgba(244, 63, 94, 0.5);
+  color: #f43f5e;
 }
 
+/* Estilos para el botón de volver y footer */
 .boton-volver {
   margin-bottom: 30px;
 }
 
+.footer {
+  margin-top: auto;
+  padding: 40px 0 30px;
+  font-size: 0.9rem;
+  color: #6b7280;
+  text-align: center;
+  position: relative;
+  width: 100%;
+}
+
+.footer::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 200px;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(61, 237, 151, 0.5), transparent);
+}
+
+/* Media queries para responsividad */
 @media (max-width: 768px) {
   .form-columnas {
     grid-template-columns: 1fr;
@@ -376,8 +486,20 @@ const volver = () => router.push('/')
     flex-direction: column;
   }
   
-  .titulo {
-    font-size: 2rem;
+  .subtitulo {
+    font-size: 1.3rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .input-text {
+    padding: 12px 12px 12px 40px;
+    font-size: 0.95rem;
+  }
+  
+  .icono-input {
+    font-size: 1rem;
+    left: 12px;
   }
 }
 </style>
