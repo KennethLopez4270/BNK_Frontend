@@ -7,7 +7,7 @@ export default defineConfig({
     vue(),
     federation({
       remotes: {
-        clientes: 'http://localhost:5174/assets/remoteEntry.js',
+        clientes: 'http://localhost:5173/assets/remoteEntry.js',
         prestamos: 'http://localhost:5177/assets/remoteEntry.js',
       },
       shared: ['vue']

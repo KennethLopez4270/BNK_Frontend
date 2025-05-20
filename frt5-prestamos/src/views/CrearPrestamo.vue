@@ -169,6 +169,12 @@ const calcularPagoMensual = () => {
   mensajeError.value = false
 }
 
+const calcularFechaFin = (startDate, months) => {
+  const date = new Date(startDate)
+  date.setMonth(date.getMonth() + parseInt(months))
+  return date.toISOString().split('T')[0]
+}
+
 const solicitarPrestamo = async () => {
   try {
     loading.value = true
@@ -187,20 +193,20 @@ const solicitarPrestamo = async () => {
     }
 
     const payload = {
-      client_id: parseInt(form.value.client_id),
-      loan_amount: parseFloat(form.value.loan_amount),
-      interest_rate: parseFloat(form.value.interest_rate),
-      term_months: parseInt(form.value.term_months),
-      monthly_payment: pagoMensual.value,
-      start_date: form.value.start_date,
-      status: 'pendiente' // Estado inicial
+      clientId: parseInt(form.value.client_id),
+      loanAmount: parseFloat(form.value.loan_amount),
+      interestRate: parseFloat(form.value.interest_rate),
+      termMonths: parseInt(form.value.term_months),
+      monthlyPayment: pagoMensual.value,
+      startDate: form.value.start_date,
+      endDate: calcularFechaFin(form.value.start_date, form.value.term_months),
+      status: 'pendiente'
     }
 
-    const response = await fetch('https://localhost:8085/api/loans', {
+    const response = await fetch('http://localhost:8085/api/loans', {
       method: 'POST',
       headers: {
-        'Content-Type': 'application/json',
-        'Origin': 'http://localhost:5173',
+        'Content-Type': 'application/json'
       },
       body: JSON.stringify(payload)
     })
@@ -213,6 +219,8 @@ const solicitarPrestamo = async () => {
     const data = await response.json()
     mensaje.value = `Préstamo creado exitosamente. ID: ${data.id}`
     mensajeError.value = false
+    
+    // Resetear formulario
     form.value = {
       client_id: '',
       loan_amount: '',
@@ -225,6 +233,7 @@ const solicitarPrestamo = async () => {
   } catch (err) {
     mensaje.value = err.message || 'Ocurrió un error al procesar la solicitud'
     mensajeError.value = true
+    console.error('Error:', err)
   } finally {
     loading.value = false
   }

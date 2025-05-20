@@ -47,11 +47,11 @@
           
           <div class="info-prestamo">
             <h3>Préstamo #{{ prestamo.id }}</h3>
-            <p class="detalle"><i class="bi bi-person"></i> Cliente ID: {{ prestamo.client_id }}</p>
-            <p class="detalle"><i class="bi bi-cash-coin"></i> Monto: ${{ prestamo.loan_amount.toFixed(2) }}</p>
+            <p class="detalle"><i class="bi bi-person"></i> Cliente ID: {{ prestamo.clientId }}</p>
+            <p class="detalle"><i class="bi bi-cash-coin"></i> Monto: {{ formatCurrency(prestamo.loanAmount) }}</p>
             <p class="detalle">
               <i class="bi bi-circle-fill"></i> 
-              <span :class="`estado ${prestamo.status}`">
+              <span :class="`estado ${prestamo.status.toLowerCase()}`">
                 {{ formatEstado(prestamo.status) }}
               </span>
             </p>
@@ -80,7 +80,7 @@
               <div class="input-group">
                 <i class="bi bi-cash-stack icono-input"></i>
                 <input
-                  v-model.number="form.loan_amount"
+                  v-model.number="form.loanAmount"
                   type="number"
                   min="100"
                   step="0.01"
@@ -95,7 +95,7 @@
               <div class="input-group">
                 <i class="bi bi-percent icono-input"></i>
                 <input
-                  v-model.number="form.interest_rate"
+                  v-model.number="form.interestRate"
                   type="number"
                   min="1"
                   max="30"
@@ -113,7 +113,7 @@
               <div class="input-group">
                 <i class="bi bi-calendar-month icono-input"></i>
                 <input
-                  v-model.number="form.term_months"
+                  v-model.number="form.termMonths"
                   type="number"
                   min="1"
                   max="120"
@@ -128,10 +128,10 @@
               <div class="input-group">
                 <i class="bi bi-list-check icono-input"></i>
                 <select v-model="form.status" class="input-select">
-                  <option value="pendiente">Pendiente</option>
-                  <option value="activo">Activo</option>
-                  <option value="rechazado">Rechazado</option>
-                  <option value="pagado">Pagado</option>
+                  <option value="PENDIENTE">Pendiente</option>
+                  <option value="ACTIVO">Activo</option>
+                  <option value="RECHAZADO">Rechazado</option>
+                  <option value="PAGADO">Pagado</option>
                 </select>
               </div>
             </div>
@@ -157,7 +157,7 @@
 
           <div v-if="pagoMensual" class="resultado-calculo">
             <p><i class="bi bi-currency-dollar"></i> Nuevo pago mensual estimado: 
-              <strong>${{ pagoMensual.toFixed(2) }}</strong>
+              <strong>{{ formatCurrency(pagoMensual) }}</strong>
             </p>
           </div>
 
@@ -187,41 +187,31 @@ import { useRouter } from 'vue-router'
 import 'animate.css'
 
 const router = useRouter()
+const API_BASE = 'http://localhost:8085/api'
 
-// Datos estáticos de respaldo
+// Datos estáticos en formato camelCase
 const datosEstaticos = [
   {
     id: 1,
-    client_id: 101,
-    loan_amount: 5000,
-    interest_rate: 5.5,
-    term_months: 12,
-    monthly_payment: 429.08,
-    start_date: '2023-01-01',
-    end_date: '2023-12-31',
-    status: 'activo'
+    clientId: 101,
+    loanAmount: 5000,
+    interestRate: 5.5,
+    termMonths: 12,
+    monthlyPayment: 429.08,
+    startDate: '2023-01-01',
+    endDate: '2023-12-31',
+    status: 'ACTIVO'
   },
   {
     id: 2,
-    client_id: 102,
-    loan_amount: 10000,
-    interest_rate: 7.0,
-    term_months: 24,
-    monthly_payment: 447.73,
-    start_date: '2023-02-15',
-    end_date: '2025-02-15',
-    status: 'activo'
-  },
-  {
-    id: 3,
-    client_id: 103,
-    loan_amount: 7500,
-    interest_rate: 6.0,
-    term_months: 18,
-    monthly_payment: 483.58,
-    start_date: '2023-03-10',
-    end_date: '2024-09-10',
-    status: 'pendiente'
+    clientId: 102,
+    loanAmount: 10000,
+    interestRate: 7.0,
+    termMonths: 24,
+    monthlyPayment: 447.73,
+    startDate: '2023-02-15',
+    endDate: '2025-02-15',
+    status: 'ACTIVO'
   }
 ]
 
@@ -235,11 +225,11 @@ const mensaje = ref('')
 const mensajeError = ref(false)
 
 const form = ref({
-  loan_amount: 0,
-  interest_rate: 0,
-  term_months: 0,
+  loanAmount: 0,
+  interestRate: 0,
+  termMonths: 0,
   status: '',
-  monthly_payment: 0
+  monthlyPayment: 0
 })
 
 onMounted(() => {
@@ -251,69 +241,82 @@ const obtenerPrestamos = async () => {
     loading.value = true
     error.value = null
     
-    // Intento obtener datos del backend
-    const response = await fetch('https://localhost:8085/api/loans', {
+    const response = await fetch(`${API_BASE}/loans`, {
       method: 'GET',
       headers: {
-        'Origin': 'http://localhost:5173',
+        'Accept': 'application/json'
       }
     })
 
     if (!response.ok) {
-      throw new Error('Error al obtener préstamos')
+      throw new Error(`Error al obtener préstamos: ${response.status}`)
     }
 
-    prestamos.value = await response.json()
+    const data = await response.json()
+    prestamos.value = normalizarPrestamos(data)
     
   } catch (err) {
-    // Si falla
-    console.error('Error al obtener préstamos:', err.message)
-    prestamos.value = datosEstaticos
+    console.error('Error al conectar con el backend:', err)
+    prestamos.value = normalizarPrestamos(datosEstaticos)
     error.value = 'No se pudo conectar al servidor. Mostrando datos de ejemplo.'
   } finally {
     loading.value = false
   }
 }
 
+// Normaliza los nombres de campos a camelCase
+const normalizarPrestamos = (prestamosData) => {
+  return prestamosData.map(p => ({
+    id: p.id,
+    clientId: p.clientId || p.client_id,
+    loanAmount: p.loanAmount || p.loan_amount,
+    interestRate: p.interestRate || p.interest_rate,
+    termMonths: p.termMonths || p.term_months,
+    monthlyPayment: p.monthlyPayment || p.monthly_payment,
+    startDate: p.startDate || p.start_date,
+    endDate: p.endDate || p.end_date,
+    status: (p.status || '').toUpperCase()
+  }))
+}
+
 const prestamosFiltrados = computed(() => {
   const filtro = busqueda.value.toLowerCase()
   return prestamos.value.filter(p => 
     p.id.toString().includes(filtro) || 
-    p.client_id.toString().includes(filtro))
+    p.clientId.toString().includes(filtro))
 })
 
 const seleccionarPrestamo = (prestamo) => {
   prestamoSeleccionado.value = prestamo
-  pagoMensual.value = prestamo.monthly_payment
+  pagoMensual.value = prestamo.monthlyPayment
   mensaje.value = ''
   mensajeError.value = false
   
-  // Llenar formulario con datos del préstamo
   form.value = {
-    loan_amount: prestamo.loan_amount,
-    interest_rate: prestamo.interest_rate,
-    term_months: prestamo.term_months,
+    loanAmount: prestamo.loanAmount,
+    interestRate: prestamo.interestRate,
+    termMonths: prestamo.termMonths,
     status: prestamo.status,
-    monthly_payment: prestamo.monthly_payment
+    monthlyPayment: prestamo.monthlyPayment
   }
 }
 
 const recalcularPago = () => {
-  if (!form.value.loan_amount || !form.value.interest_rate || !form.value.term_months) {
+  if (!form.value.loanAmount || !form.value.interestRate || !form.value.termMonths) {
     mensaje.value = 'Complete los campos requeridos para calcular'
     mensajeError.value = true
     return
   }
 
-  const principal = parseFloat(form.value.loan_amount)
-  const tasaMensual = parseFloat(form.value.interest_rate) / 100 / 12
-  const plazoMeses = parseInt(form.value.term_months)
+  const principal = parseFloat(form.value.loanAmount)
+  const tasaMensual = parseFloat(form.value.interestRate) / 100 / 12
+  const plazoMeses = parseInt(form.value.termMonths)
 
   // Fórmula de amortización
   pagoMensual.value = (principal * tasaMensual) / 
                       (1 - Math.pow(1 + tasaMensual, -plazoMeses))
   
-  form.value.monthly_payment = pagoMensual.value
+  form.value.monthlyPayment = pagoMensual.value
   
   mensaje.value = 'Pago mensual recalculado'
   mensajeError.value = false
@@ -325,99 +328,106 @@ const modificarPrestamo = async () => {
     mensaje.value = ''
     mensajeError.value = false
 
-    // Validación
-    if (!form.value.loan_amount || !form.value.interest_rate || 
-        !form.value.term_months || !form.value.status) {
+    if (!form.value.loanAmount || !form.value.interestRate || 
+        !form.value.termMonths || !form.value.status) {
       throw new Error('Todos los campos son requeridos')
     }
 
-    // Si no se ha recalculado, usar el valor existente
     if (pagoMensual.value === 0) {
-      pagoMensual.value = prestamoSeleccionado.value.monthly_payment
+      pagoMensual.value = prestamoSeleccionado.value.monthlyPayment
     }
 
     const payload = {
-      loan_amount: parseFloat(form.value.loan_amount),
-      interest_rate: parseFloat(form.value.interest_rate),
-      term_months: parseInt(form.value.term_months),
-      monthly_payment: pagoMensual.value,
+      loanAmount: parseFloat(form.value.loanAmount),
+      interestRate: parseFloat(form.value.interestRate),
+      termMonths: parseInt(form.value.termMonths),
+      monthlyPayment: pagoMensual.value,
       status: form.value.status
     }
 
-    // Intento conectar con el backend
-    const response = await fetch(`https://localhost:8085/api/loans/${prestamoSeleccionado.value.id}`, {
+    const response = await fetch(`${API_BASE}/loans/${prestamoSeleccionado.value.id}`, {
       method: 'PUT',
       headers: {
-        'Content-Type': 'application/json',
-        'Origin': 'http://localhost:5173',
+        'Content-Type': 'application/json'
       },
       body: JSON.stringify(payload)
     })
 
     if (!response.ok) {
-      throw new Error('Error al actualizar el préstamo')
+      const errorData = await response.json()
+      throw new Error(errorData.message || 'Error al actualizar el préstamo')
     }
 
-    // Actualizar localmente
     const updatedPrestamo = await response.json()
     const index = prestamos.value.findIndex(p => p.id === prestamoSeleccionado.value.id)
     if (index !== -1) {
-      prestamos.value[index] = updatedPrestamo
+      prestamos.value[index] = normalizarPrestamo(updatedPrestamo)
     }
 
     mensaje.value = 'Préstamo actualizado correctamente'
     mensajeError.value = false
 
   } catch (err) {
-    // Simular éxito con datos locales si el backend falla
-    console.error('Error al modificar préstamo:', err.message)
+    console.error('Error al modificar préstamo:', err)
     
+    // Actualización local como fallback
     const index = prestamos.value.findIndex(p => p.id === prestamoSeleccionado.value.id)
     if (index !== -1) {
       prestamos.value[index] = {
         ...prestamos.value[index],
         ...form.value,
-        monthly_payment: pagoMensual.value
+        monthlyPayment: pagoMensual.value
       }
     }
     
-    mensaje.value = 'Modificación simulada (backend no disponible)'
-    mensajeError.value = false
+    mensaje.value = err.message || 'Error al actualizar el préstamo'
+    mensajeError.value = true
   } finally {
     loading.value = false
   }
 }
 
-const volver = () => router.push('/')
+// Helpers
+const formatCurrency = (value) => {
+  return new Intl.NumberFormat('es-ES', {
+    style: 'currency',
+    currency: 'USD',
+    minimumFractionDigits: 2
+  }).format(value || 0)
+}
 
 const getLoanIcon = (status) => {
+  const statusLower = (status || '').toLowerCase()
   const icons = {
     activo: 'bi-cash-stack',
     pendiente: 'bi-hourglass',
     rechazado: 'bi-x-circle',
     pagado: 'bi-coin'
   }
-  return icons[status] || 'bi-question-circle'
+  return icons[statusLower] || 'bi-question-circle'
 }
 
 const getColorByStatus = (status) => {
+  const statusLower = (status || '').toLowerCase()
   const colors = {
     activo: 'green',
     pendiente: 'blue',
-    rechazado: 'pink',
+    rechazado: 'red',
     pagado: 'purple'
   }
-  return colors[status] || 'blue'
+  return colors[statusLower] || 'gray'
 }
 
 const formatEstado = (estado) => {
+  const estadoLower = (estado || '').toLowerCase()
   const estados = {
     activo: 'Activo',
     pendiente: 'Pendiente',
     rechazado: 'Rechazado',
     pagado: 'Pagado'
   }
-  return estados[estado] || estado
+  return estados[estadoLower] || estado
 }
-</script>
 
+const volver = () => router.push('/')
+</script>

@@ -1,6 +1,8 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import { defineAsyncComponent } from 'vue'
 
+const ClientesApp = () => import('clientes/AppClientes')
+
 const HomePrestamos = () => import('prestamos/HomePrestamos')
 const CrearPrestamo = () => import('prestamos/CrearPrestamo')
 const ActualizarPrestamo = () => import('prestamos/ActualizarPrestamo')
@@ -14,7 +16,10 @@ const routes = [
   { path: '/prestamos/crear', component: CrearPrestamo },
   { path: '/prestamos/actualizar', component: ActualizarPrestamo },
   { path: '/prestamos/eliminar', component: EliminarPrestamo },
-  { path: '/prestamos/obtener', component: ObtenerPrestamos }
+  { path: '/prestamos/obtener', component: ObtenerPrestamos },
+
+  { path: '/clientes/:subpath(.*)*', component: ClientesApp },
+  { path: '/clientes', component: ClientesApp }
 ]
 
 const router = createRouter({

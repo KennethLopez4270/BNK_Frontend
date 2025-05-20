@@ -47,11 +47,11 @@
           
           <div class="info-prestamo">
             <h3>Préstamo #{{ prestamo.id }}</h3>
-            <p class="detalle"><i class="bi bi-person"></i> Cliente ID: {{ prestamo.client_id }}</p>
-            <p class="detalle"><i class="bi bi-cash-coin"></i> Monto: ${{ prestamo.loan_amount.toFixed(2) }}</p>
+            <p class="detalle"><i class="bi bi-person"></i> Cliente ID: {{ prestamo.clientId }}</p>
+            <p class="detalle"><i class="bi bi-cash-coin"></i> Monto: {{ formatCurrency(prestamo.loanAmount) }}</p>
             <p class="detalle">
               <i class="bi bi-circle-fill"></i> 
-              <span :class="`estado ${prestamo.status}`">
+              <span :class="`estado ${prestamo.status.toLowerCase()}`">
                 {{ formatEstado(prestamo.status) }}
               </span>
             </p>
@@ -76,9 +76,9 @@
 
         <div class="detalle-prestamo">
           <p><strong>Préstamo #{{ prestamoSeleccionado.id }}</strong></p>
-          <p>Cliente ID: {{ prestamoSeleccionado.client_id }}</p>
-          <p>Monto: ${{ prestamoSeleccionado.loan_amount.toFixed(2) }}</p>
-          <p>Estado: <span :class="`estado ${prestamoSeleccionado.status}`">{{ formatEstado(prestamoSeleccionado.status) }}</span></p>
+          <p>Cliente ID: {{ prestamoSeleccionado.clientId }}</p>
+          <p>Monto: {{ formatCurrency(prestamoSeleccionado.loanAmount) }}</p>
+          <p>Estado: <span :class="`estado ${prestamoSeleccionado.status.toLowerCase()}`">{{ formatEstado(prestamoSeleccionado.status) }}</span></p>
         </div>
 
         <div class="botones-confirmacion">
@@ -124,41 +124,31 @@ import { useRouter } from 'vue-router'
 import 'animate.css'
 
 const router = useRouter()
+const API_BASE = 'http://localhost:8085/api'
 
-// Datos estáticos de ejemplo
+// Datos estáticos en formato camelCase
 const datosEstaticos = [
   {
     id: 1,
-    client_id: 101,
-    loan_amount: 5000,
-    interest_rate: 5.5,
-    term_months: 12,
-    monthly_payment: 429.08,
-    start_date: '2023-01-01',
-    end_date: '2023-12-31',
-    status: 'activo'
+    clientId: 101,
+    loanAmount: 5000,
+    interestRate: 5.5,
+    termMonths: 12,
+    monthlyPayment: 429.08,
+    startDate: '2023-01-01',
+    endDate: '2023-12-31',
+    status: 'ACTIVO'
   },
   {
     id: 2,
-    client_id: 102,
-    loan_amount: 10000,
-    interest_rate: 7.0,
-    term_months: 24,
-    monthly_payment: 447.73,
-    start_date: '2023-02-15',
-    end_date: '2025-02-15',
-    status: 'activo'
-  },
-  {
-    id: 3,
-    client_id: 103,
-    loan_amount: 7500,
-    interest_rate: 6.0,
-    term_months: 18,
-    monthly_payment: 483.58,
-    start_date: '2023-03-10',
-    end_date: '2024-09-10',
-    status: 'pendiente'
+    clientId: 102,
+    loanAmount: 10000,
+    interestRate: 7.0,
+    termMonths: 24,
+    monthlyPayment: 447.73,
+    startDate: '2023-02-15',
+    endDate: '2025-02-15',
+    status: 'ACTIVO'
   }
 ]
 
@@ -179,35 +169,49 @@ const obtenerPrestamos = async () => {
     loading.value = true
     error.value = null
     
-    // Intento obtener datos del backend
-    const response = await fetch('https://localhost:8085/api/loans', {
+    const response = await fetch(`${API_BASE}/loans`, {
       method: 'GET',
       headers: {
-        'Origin': 'http://localhost:5173',
+        'Accept': 'application/json'
       }
     })
 
     if (!response.ok) {
-      throw new Error('Error al obtener préstamos')
+      throw new Error(`Error al obtener préstamos: ${response.status}`)
     }
 
-    prestamos.value = await response.json()
+    const data = await response.json()
+    prestamos.value = normalizarPrestamos(data)
     
   } catch (err) {
-    // Si falla, usar datos estáticos
-    console.error('Error al obtener préstamos:', err.message)
-    prestamos.value = datosEstaticos
+    console.error('Error al conectar con el backend:', err)
+    prestamos.value = normalizarPrestamos(datosEstaticos)
     error.value = 'No se pudo conectar al servidor. Mostrando datos de ejemplo.'
   } finally {
     loading.value = false
   }
 }
 
+// Normaliza los nombres de campos a camelCase
+const normalizarPrestamos = (prestamosData) => {
+  return prestamosData.map(p => ({
+    id: p.id,
+    clientId: p.clientId || p.client_id,
+    loanAmount: p.loanAmount || p.loan_amount,
+    interestRate: p.interestRate || p.interest_rate,
+    termMonths: p.termMonths || p.term_months,
+    monthlyPayment: p.monthlyPayment || p.monthly_payment,
+    startDate: p.startDate || p.start_date,
+    endDate: p.endDate || p.end_date,
+    status: (p.status || '').toUpperCase()
+  }))
+}
+
 const prestamosFiltrados = computed(() => {
   const filtro = busqueda.value.toLowerCase()
   return prestamos.value.filter(p => 
     p.id.toString().includes(filtro) || 
-    p.client_id.toString().includes(filtro))
+    p.clientId.toString().includes(filtro))
 })
 
 const seleccionarPrestamo = (prestamo) => {
@@ -227,16 +231,16 @@ const eliminarPrestamo = async () => {
     mensaje.value = ''
     mensajeError.value = false
 
-    // Intento conectar con el backend
-    const response = await fetch(`https://localhost:8085/api/loans/${prestamoSeleccionado.value.id}`, {
+    const response = await fetch(`${API_BASE}/loans/${prestamoSeleccionado.value.id}`, {
       method: 'DELETE',
       headers: {
-        'Origin': 'http://localhost:5173',
+        'Accept': 'application/json'
       }
     })
 
     if (!response.ok) {
-      throw new Error('Error al eliminar el préstamo')
+      const errorData = await response.json()
+      throw new Error(errorData.message || 'Error al eliminar el préstamo')
     }
 
     // Eliminar localmente
@@ -247,51 +251,62 @@ const eliminarPrestamo = async () => {
     prestamoSeleccionado.value = null
 
   } catch (err) {
-    // Simular éxito con datos locales si el backend falla
-    console.error('Error al eliminar préstamo:', err.message)
+    console.error('Error al eliminar préstamo:', err)
     
+    // Eliminación local como fallback
     prestamos.value = prestamos.value.filter(p => p.id !== prestamoSeleccionado.value.id)
     
-    mensaje.value = 'Eliminación simulada (backend no disponible)'
-    mensajeError.value = false
+    mensaje.value = err.message || 'Error al eliminar el préstamo'
+    mensajeError.value = true
     prestamoSeleccionado.value = null
   } finally {
     loading.value = false
   }
 }
 
-const volver = () => router.push('/')
+// Helpers
+const formatCurrency = (value) => {
+  return new Intl.NumberFormat('es-ES', {
+    style: 'currency',
+    currency: 'USD',
+    minimumFractionDigits: 2
+  }).format(value || 0)
+}
 
-// Funciones auxiliares para mostrar iconos y colores
 const getLoanIcon = (status) => {
+  const statusLower = (status || '').toLowerCase()
   const icons = {
     activo: 'bi-cash-stack',
     pendiente: 'bi-hourglass',
     rechazado: 'bi-x-circle',
     pagado: 'bi-coin'
   }
-  return icons[status] || 'bi-question-circle'
+  return icons[statusLower] || 'bi-question-circle'
 }
 
 const getColorByStatus = (status) => {
+  const statusLower = (status || '').toLowerCase()
   const colors = {
     activo: 'green',
     pendiente: 'blue',
-    rechazado: 'pink',
+    rechazado: 'red',
     pagado: 'purple'
   }
-  return colors[status] || 'blue'
+  return colors[statusLower] || 'gray'
 }
 
 const formatEstado = (estado) => {
+  const estadoLower = (estado || '').toLowerCase()
   const estados = {
     activo: 'Activo',
     pendiente: 'Pendiente',
     rechazado: 'Rechazado',
     pagado: 'Pagado'
   }
-  return estados[estado] || estado
+  return estados[estadoLower] || estado
 }
+
+const volver = () => router.push('/')
 </script>
 
 <style scoped>

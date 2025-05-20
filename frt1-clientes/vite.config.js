@@ -1,4 +1,4 @@
-// frt5-prestamos/vite.config.js
+// frt1-clientes/vite.config.js
 import { defineConfig } from 'vite'
 import vue from '@vitejs/plugin-vue'
 import federation from '@originjs/vite-plugin-federation'
@@ -7,10 +7,10 @@ export default defineConfig({
   plugins: [
     vue(),
     federation({
-      name: 'prestamos',
+      name: 'clientes',
       filename: 'remoteEntry.js',
       exposes: {
-        './PrestamosApp': './src/views/HomePrestamos.vue' // o cambiar este según se necesite
+        './AppClientes': './src/AppClientes.vue'
       },
       shared: ['vue']
     })
@@ -20,5 +20,8 @@ export default defineConfig({
   },
   server: {
     port: 5173
+  },
+  optimizeDeps: {
+    exclude: ['vue']
   }
 })

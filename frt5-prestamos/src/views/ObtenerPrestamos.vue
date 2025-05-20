@@ -2,9 +2,7 @@
   <div class="prestamos-app">
     <section class="hero animate__animated animate__fadeIn">
       <h1 class="titulo">Consulta de Préstamos</h1>
-      <p class="descripcion">
-        Visualiza y filtra todos los préstamos del sistema
-      </p>
+      <p class="descripcion">Visualiza y filtra todos los préstamos del sistema</p>
     </section>
 
     <section class="filtros-container animate__animated animate__fadeInUp">
@@ -43,8 +41,8 @@
                 <div class="header-content">
                   <span>{{ columna.titulo }}</span>
                   <i class="bi" :class="{
-                    'bi-arrow-up': campoOrden === columna.campo && orden[columna.campo] === 'up',
-                    'bi-arrow-down': campoOrden === columna.campo && orden[columna.campo] === 'down'
+                    'bi-arrow-up': campoOrden === columna.campo && orden === 'asc',
+                    'bi-arrow-down': campoOrden === columna.campo && orden === 'desc'
                   }"></i>
                 </div>
               </th>
@@ -54,13 +52,13 @@
           <tbody>
             <tr v-for="prestamo in prestamosFiltrados" :key="prestamo.id">
               <td>{{ prestamo.id }}</td>
-              <td>{{ prestamo.client_id }}</td>
-              <td>${{ prestamo.loan_amount.toFixed(2) }}</td>
-              <td>{{ prestamo.interest_rate }}%</td>
-              <td>{{ prestamo.term_months }} meses</td>
-              <td>${{ prestamo.monthly_payment.toFixed(2) }}</td>
+              <td>{{ prestamo.clientId }}</td>
+              <td>{{ formatCurrency(prestamo.loanAmount) }}</td>
+              <td>{{ prestamo.interestRate }}%</td>
+              <td>{{ prestamo.termMonths }} meses</td>
+              <td>{{ formatCurrency(prestamo.monthlyPayment) }}</td>
               <td>
-                <span :class="`estado ${prestamo.status}`">
+                <span :class="`estado ${prestamo.status.toLowerCase()}`">
                   <i :class="`bi ${getEstadoIcon(prestamo.status)}`"></i>
                   {{ formatEstado(prestamo.status) }}
                 </span>
@@ -96,35 +94,35 @@
         <div class="detalles-prestamo" v-if="prestamoSeleccionado">
           <div class="detalle-item">
             <span class="detalle-etiqueta">Cliente ID:</span>
-            <span class="detalle-valor">{{ prestamoSeleccionado.client_id }}</span>
+            <span class="detalle-valor">{{ prestamoSeleccionado.clientId }}</span>
           </div>
           <div class="detalle-item">
             <span class="detalle-etiqueta">Monto:</span>
-            <span class="detalle-valor">${{ prestamoSeleccionado.loan_amount.toFixed(2) }}</span>
+            <span class="detalle-valor">{{ formatCurrency(prestamoSeleccionado.loanAmount) }}</span>
           </div>
           <div class="detalle-item">
             <span class="detalle-etiqueta">Tasa de interés:</span>
-            <span class="detalle-valor">{{ prestamoSeleccionado.interest_rate }}%</span>
+            <span class="detalle-valor">{{ prestamoSeleccionado.interestRate }}%</span>
           </div>
           <div class="detalle-item">
             <span class="detalle-etiqueta">Plazo:</span>
-            <span class="detalle-valor">{{ prestamoSeleccionado.term_months }} meses</span>
+            <span class="detalle-valor">{{ prestamoSeleccionado.termMonths }} meses</span>
           </div>
           <div class="detalle-item">
             <span class="detalle-etiqueta">Cuota mensual:</span>
-            <span class="detalle-valor">${{ prestamoSeleccionado.monthly_payment.toFixed(2) }}</span>
+            <span class="detalle-valor">{{ formatCurrency(prestamoSeleccionado.monthlyPayment) }}</span>
           </div>
           <div class="detalle-item">
             <span class="detalle-etiqueta">Fecha inicio:</span>
-            <span class="detalle-valor">{{ formatFecha(prestamoSeleccionado.start_date) || 'N/A' }}</span>
+            <span class="detalle-valor">{{ formatFecha(prestamoSeleccionado.startDate) }}</span>
           </div>
           <div class="detalle-item">
             <span class="detalle-etiqueta">Fecha fin:</span>
-            <span class="detalle-valor">{{ formatFecha(prestamoSeleccionado.end_date) || 'N/A' }}</span>
+            <span class="detalle-valor">{{ formatFecha(prestamoSeleccionado.endDate) }}</span>
           </div>
           <div class="detalle-item">
             <span class="detalle-etiqueta">Estado:</span>
-            <span :class="`estado ${prestamoSeleccionado.status}`">
+            <span :class="`estado ${prestamoSeleccionado.status.toLowerCase()}`">
               <i :class="`bi ${getEstadoIcon(prestamoSeleccionado.status)}`"></i>
               {{ formatEstado(prestamoSeleccionado.status) }}
             </span>
@@ -149,81 +147,54 @@ import { useRouter } from 'vue-router'
 import 'animate.css'
 
 const router = useRouter()
+const API_BASE = 'http://localhost:8085/api'
 
-// Datos estáticos de ejemplo
-const datosEstaticos = [
-  {
-    id: 1,
-    client_id: 101,
-    loan_amount: 5000,
-    interest_rate: 5.5,
-    term_months: 12,
-    monthly_payment: 429.08,
-    start_date: '2023-01-01',
-    end_date: '2023-12-31',
-    status: 'activo'
-  },
-  {
-    id: 2,
-    client_id: 102,
-    loan_amount: 10000,
-    interest_rate: 7.0,
-    term_months: 24,
-    monthly_payment: 447.73,
-    start_date: '2023-02-15',
-    end_date: '2025-02-15',
-    status: 'activo'
-  },
-  {
-    id: 3,
-    client_id: 103,
-    loan_amount: 7500,
-    interest_rate: 6.0,
-    term_months: 18,
-    monthly_payment: 483.58,
-    start_date: '2023-03-10',
-    end_date: '2024-09-10',
-    status: 'pendiente'
-  },
-  {
-    id: 4,
-    client_id: 101,
-    loan_amount: 15000,
-    interest_rate: 8.5,
-    term_months: 36,
-    monthly_payment: 473.82,
-    start_date: '2023-04-05',
-    end_date: '2026-04-05',
-    status: 'activo'
-  }
-]
-
+// Columnas de la tabla (usando nombres camelCase del Swagger)
 const columnas = [
   { titulo: 'ID Préstamo', campo: 'id' },
-  { titulo: 'ID Cliente', campo: 'client_id' },
-  { titulo: 'Monto', campo: 'loan_amount' },
-  { titulo: 'Tasa %', campo: 'interest_rate' },
-  { titulo: 'Plazo', campo: 'term_months' },
-  { titulo: 'Cuota', campo: 'monthly_payment' },
+  { titulo: 'ID Cliente', campo: 'clientId' },
+  { titulo: 'Monto', campo: 'loanAmount' },
+  { titulo: 'Tasa %', campo: 'interestRate' },
+  { titulo: 'Plazo', campo: 'termMonths' },
+  { titulo: 'Cuota', campo: 'monthlyPayment' },
   { titulo: 'Estado', campo: 'status' }
 ]
 
+// Datos reactivos
 const prestamos = ref([])
 const filtroCliente = ref('')
 const loading = ref(false)
 const error = ref(null)
 const mostrarModal = ref(false)
 const prestamoSeleccionado = ref(null)
-const orden = ref({
-  id: 'down',
-  client_id: 'down',
-  loan_amount: 'down',
-  interest_rate: 'down',
-  term_months: 'down',
-  monthly_payment: 'down',
-  status: 'down'
-})
 const campoOrden = ref('id')
+const orden = ref('asc')
+
+// Datos de ejemplo (en formato camelCase)
+const datosEstaticos = [
+  {
+    id: 1,
+    clientId: 101,
+    loanAmount: 5000,
+    interestRate: 5.5,
+    termMonths: 12,
+    monthlyPayment: 429.08,
+    startDate: '2023-01-01',
+    endDate: '2023-12-31',
+    status: 'ACTIVO'
+  },
+  {
+    id: 2,
+    clientId: 102,
+    loanAmount: 10000,
+    interestRate: 7.0,
+    termMonths: 24,
+    monthlyPayment: 447.73,
+    startDate: '2023-02-15',
+    endDate: '2025-02-15',
+    status: 'ACTIVO'
+  }
+]
 
 onMounted(() => {
   obtenerPrestamos()
@@ -234,56 +205,85 @@ const obtenerPrestamos = async () => {
     loading.value = true
     error.value = null
     
-    // Intento obtener datos del backend
-    const response = await fetch('https://localhost:8085/api/loans', {
+    const response = await fetch(`${API_BASE}/loans`, {
       method: 'GET',
       headers: {
-        'Origin': 'http://localhost:5173',
+        'Accept': 'application/json'
       }
     })
 
     if (!response.ok) {
-      throw new Error('Error al obtener préstamos')
+      throw new Error(`Error al obtener préstamos: ${response.status}`)
     }
 
-    prestamos.value = await response.json()
+    const data = await response.json()
+    prestamos.value = normalizarPrestamos(data)
     
   } catch (err) {
-    // Si falla, uso datos estáticos
-    console.error('Error al obtener préstamos, usando datos estáticos:', err.message)
-    prestamos.value = datosEstaticos
+    console.error('Error al conectar con el backend:', err)
+    prestamos.value = normalizarPrestamos(datosEstaticos)
     error.value = 'No se pudo conectar al servidor. Mostrando datos de ejemplo.'
   } finally {
     loading.value = false
   }
 }
 
+// Normaliza los nombres de campos a camelCase
+const normalizarPrestamos = (prestamosData) => {
+  return prestamosData.map(p => ({
+    id: p.id,
+    clientId: p.clientId || p.client_id,
+    loanAmount: p.loanAmount || p.loan_amount,
+    interestRate: p.interestRate || p.interest_rate,
+    termMonths: p.termMonths || p.term_months,
+    monthlyPayment: p.monthlyPayment || p.monthly_payment,
+    startDate: p.startDate || p.start_date,
+    endDate: p.endDate || p.end_date,
+    status: (p.status || '').toUpperCase()
+  }))
+}
+
 const prestamosFiltrados = computed(() => {
-  let resultados = prestamos.value
+  let resultados = [...prestamos.value]
   
-  // Filtrar por ID de cliente si hay búsqueda
+  // Filtrar por ID de cliente
   if (filtroCliente.value) {
     resultados = resultados.filter(p => 
-      p.client_id.toString().includes(filtroCliente.value))
+      p.clientId.toString().includes(filtroCliente.value)
+    )
   }
   
-  // Ordenar los resultados
-  return resultados.sort((a, b) => {
-    const campo = campoOrden.value
-    const valorA = a[campo]
-    const valorB = b[campo]
-    
-    if (orden.value[campo] === 'up') {
-      return valorA > valorB ? 1 : -1
-    } else {
-      return valorA < valorB ? 1 : -1
-    }
-  })
+  // Ordenar resultados
+  if (campoOrden.value) {
+    resultados.sort((a, b) => {
+      const valorA = a[campoOrden.value]
+      const valorB = b[campoOrden.value]
+      
+      if (valorA == null) return 1
+      if (valorB == null) return -1
+      
+      if (typeof valorA === 'string') {
+        return orden.value === 'asc' 
+          ? valorA.localeCompare(valorB)
+          : valorB.localeCompare(valorA)
+      } else {
+        return orden.value === 'asc' 
+          ? valorA - valorB
+          : valorB - valorA
+      }
+    })
+  }
+  
+  return resultados
 })
 
 const ordenarPor = (campo) => {
-  campoOrden.value = campo
-  orden.value[campo] = orden.value[campo] === 'up' ? 'down' : 'up'
+  if (campoOrden.value === campo) {
+    orden.value = orden.value === 'asc' ? 'desc' : 'asc'
+  } else {
+    campoOrden.value = campo
+    orden.value = 'asc'
+  }
 }
 
 const verDetalles = (prestamo) => {
@@ -293,29 +293,42 @@ const verDetalles = (prestamo) => {
 
 const volver = () => router.push('/')
 
+// Helpers para formato
+const formatCurrency = (value) => {
+  return new Intl.NumberFormat('es-ES', {
+    style: 'currency',
+    currency: 'USD',
+    minimumFractionDigits: 2
+  }).format(value || 0)
+}
+
+const formatFecha = (fecha) => {
+  if (!fecha) return 'N/A'
+  return new Date(fecha).toLocaleDateString('es-ES')
+}
+
 const getEstadoIcon = (estado) => {
+  const estadoLower = (estado || '').toLowerCase()
   const icons = {
-    activo: 'bi-check-circle',
-    pendiente: 'bi-hourglass',
-    rechazado: 'bi-x-circle',
-    pagado: 'bi-coin'
+    activo: 'bi-check-circle-fill',
+    pendiente: 'bi-hourglass-split',
+    rechazado: 'bi-x-circle-fill',
+    pagado: 'bi-coin',
+    vencido: 'bi-exclamation-triangle-fill'
   }
-  return icons[estado] || 'bi-question-circle'
+  return icons[estadoLower] || 'bi-question-circle-fill'
 }
 
 const formatEstado = (estado) => {
+  const estadoLower = (estado || '').toLowerCase()
   const estados = {
     activo: 'Activo',
     pendiente: 'Pendiente',
     rechazado: 'Rechazado',
-    pagado: 'Pagado'
+    pagado: 'Pagado',
+    vencido: 'Vencido'
   }
-  return estados[estado] || estado
-}
-
-const formatFecha = (fecha) => {
-  if (!fecha) return null
-  return new Date(fecha).toLocaleDateString('es-ES')
+  return estados[estadoLower] || estado
 }
 </script>
 
