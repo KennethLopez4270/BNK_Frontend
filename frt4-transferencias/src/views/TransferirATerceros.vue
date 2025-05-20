@@ -1,12 +1,11 @@
 <template>
   <div class="transferencias-app">
-    <!-- Botón de volver con animación -->
+    <!-- Botón de volver -->
     <button @click="volver" class="back-button animate__animated animate__fadeIn">
       <i class="bi bi-arrow-left"></i> Volver
     </button>
 
-    <!-- Sección hero con animación -->
-    <section class="hero animate__animated animate__fadeIn">
+    <section class="hero">
       <h1 class="titulo">Transferencia a terceros</h1>
       <p class="descripcion">
         Ingresa los datos del destinatario y el monto para realizar tu transferencia
@@ -14,18 +13,17 @@
     </section>
 
     <div class="transferencia-content">
+      <!-- Sección de cuentas -->
       <div class="accounts-section">
-        <!-- Cuentas Origen con efecto escalonado -->
         <div class="accounts-column">
-          <h5 class="section-title animate__animated animate__fadeIn">
+          <h5 class="section-title">
             <i class="bi bi-arrow-up-circle"></i> Cuenta origen
           </h5>
           <div class="cards-container">
             <div
-              class="card-accion animate__animated animate__fadeInUp"
-              v-for="(cuenta, index) in cuentas"
+              class="card-accion"
+              v-for="cuenta in cuentas"
               :key="'origen-' + cuenta.id"
-              :style="`animation-delay: ${index * 0.1}s`"
               :class="{ 'selected-origin': form.cuentaOrigen === cuenta.id }"
               @click="selectCuentaOrigen(cuenta.id)"
             >
@@ -42,15 +40,13 @@
           </div>
         </div>
 
-        <!-- Datos Destinatario con animación -->
         <div class="accounts-column">
-          <h5 class="section-title animate__animated animate__fadeIn" style="animation-delay: 0.1s">
-            <i class="bi bi-arrow-down-circle"></i> Datos del destinatario
+          <h5 class="section-title">
+            <i class="bi bi-arrow-down-circle"></i> Cuenta destino
           </h5>
-          
-          <div class="form-group animate__animated animate__fadeIn" style="animation-delay: 0.2s">
+          <div class="form-group">
             <label for="identificador" class="form-label">
-              <i class="bi bi-person-fill"></i> Número de documento o email
+              <i class="bi bi-search"></i> Buscar por número de cuenta
             </label>
             <div class="input-group">
               <input
@@ -58,50 +54,35 @@
                 class="form-control"
                 id="identificador"
                 v-model="form.identificador"
-                @input="buscarDestinatario"
-                placeholder="Ej: 12345678 o usuario@ejemplo.com"
-                required
+                placeholder="Ej: ACC8001"
               />
             </div>
-            <br>
             <small v-if="errorIdentificador" class="text-danger">{{ errorIdentificador }}</small>
           </div>
-          
-          <div class="form-group animate__animated animate__fadeIn" v-if="destinatario" style="animation-delay: 0.3s">
-            <label class="form-label">Nombre</label>
-            <input
-              type="text"
-              class="form-control"
-              v-model="destinatario.full_name"
-              readonly
-            />
-          </div>
-          
-          <br>
-          
-          <div class="form-group animate__animated animate__fadeIn" v-if="destinatario" style="animation-delay: 0.4s">
-            <label class="form-label">Cuenta destino</label>
-            <div class="input-group">
-            <select
-              class="form-control"
-              v-model="form.cuentaDestino"
-              required
+          <div class="cards-container">
+            <div
+              class="card-accion"
+              v-for="cuenta in cuentasDestinoFiltradas"
+              :key="'destino-' + cuenta.id"
+              :class="{ 'selected-destination': form.cuentaDestino === cuenta.numero }"
+              @click="selectCuentaDestino(cuenta.numero)"
             >
-              <option disabled value="">Selecciona una cuenta</option>
-              <option
-                v-for="(cuenta, index) in destinatario.cuentas"
-                :key="cuenta.numero"
-                :value="cuenta.numero"
-              >
-                {{ cuenta.tipo.toUpperCase() }} - {{ formatAccountNumber(cuenta.numero) }}
-              </option>
-            </select>
+              <div class="icono-wrapper">
+                <div class="icono" :class="accountTypeClass(cuenta.tipo)">
+                  <i :class="accountTypeIcon(cuenta.tipo)"></i>
+                </div>
+                <div class="glow" :class="glowColor(cuenta.tipo)"></div>
+              </div>
+              <h3>{{ cuenta.tipo.toUpperCase() }} - {{ formatAccountNumber(cuenta.numero) }}</h3>
+              <p class="descripcion-card">Saldo: Bs {{ cuenta.saldo.toFixed(2) }}</p>
+              <small>ID: {{ cuenta.id }} | Cliente: {{ cuenta.clienteNombre }}</small>
             </div>
           </div>
         </div>
       </div>
 
-      <div class="form-section animate__animated animate__fadeIn" style="animation-delay: 0.5s">
+      <!-- Formulario de transferencia -->
+      <div class="form-section">
         <form @submit.prevent="enviarTransferencia" class="transfer-form">
           <div class="form-group">
             <label for="monto" class="form-label">
@@ -144,18 +125,17 @@
       </div>
     </div>
 
-    <!-- Footer con animación -->
-    <footer class="footer animate__animated animate__fadeIn" style="animation-delay: 0.6s">
+    <footer class="footer">
       © 2025 Banco Digital. Todos los derechos reservados.
     </footer>
 
-    <!-- Modal para una sola cuenta -->
+    <!-- Modal para error de cuentas -->
     <div
       class="modal fade"
       id="singleAccountModal"
       tabindex="-1"
       aria-labelledby="singleAccountModalLabel"
-      aria-hidden="true"
+      :inert="modalInert"
     >
       <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content">
@@ -166,7 +146,11 @@
               class="btn-close"
               data-bs-dismiss="modal"
               aria-label="Close"
+              @click="closeModal"
             ></button>
+          </div>
+          <div class="modal-body">
+            No se encontraron cuentas válidas para realizar la transferencia.
           </div>
           <div class="modal-footer">
             <button
@@ -188,7 +172,7 @@
       id="transferResultModal"
       tabindex="-1"
       aria-labelledby="transferResultModalLabel"
-      aria-hidden="true"
+      :inert="modalInert"
     >
       <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content">
@@ -201,6 +185,7 @@
               class="btn-close"
               data-bs-dismiss="modal"
               aria-label="Close"
+              @click="closeModal"
             ></button>
           </div>
           <div class="modal-body">
@@ -212,12 +197,18 @@
               class="btn"
               :class="transferSuccess ? 'btn-success' : 'btn-danger'"
               data-bs-dismiss="modal"
+              @click="closeModal"
             >
               Aceptar
             </button>
           </div>
         </div>
       </div>
+    </div>
+
+    <!-- Efecto de partículas -->
+    <div class="bg-particles">
+      <div v-for="i in 20" :key="i" class="particle" :style="particleStyle(i)"></div>
     </div>
   </div>
 </template>
@@ -229,144 +220,195 @@ import 'animate.css'
 import * as bootstrap from 'bootstrap'
 
 const router = useRouter()
+const clientId = 1
+const accountServiceUrl = 'http://localhost:8082/api/accounts'
+const clientServiceUrl = 'http://localhost:8081/api/clients'
+const transferServiceUrl = 'http://localhost:8084/api/transfers'
 
-// Datos simulados para cuentas del usuario actual
-const cuentas = ref([
-  { id: 1, numero: '10010001', tipo: 'ahorro', saldo: 1500.50 },
-  { id: 2, numero: '10010002', tipo: 'corriente', saldo: 980.00 }
-])
-
-// Datos simulados para clientes (autocompletado)
-const clientes = ref([
-  {
-    id: 2,
-    document_number: '87654321',
-    email: 'juan.perez@ejemplo.com',
-    full_name: 'Juan Pérez',
-    cuentas: [
-      { id: 3, numero: '20020001', tipo: 'ahorro', saldo: 500.00 },
-      { id: 4, numero: '20020002', tipo: 'corriente', saldo: 1200.00 }
-    ]
-  },
-  {
-    id: 3,
-    document_number: '12345678',
-    email: 'maria.gomez@ejemplo.com',
-    full_name: 'María Gómez',
-    cuentas: [
-      { id: 5, numero: '30030001', tipo: 'ahorro', saldo: 3000.00 }
-    ]
-  }
-])
-
+const cuentas = ref([])
+const cuentasDestino = ref([])
 const form = ref({
   cuentaOrigen: null,
   cuentaDestino: null,
   monto: '',
   identificador: ''
 })
-
-const destinatario = ref(null)
 const errorIdentificador = ref('')
 const transferSuccess = ref(false)
 const transferMessage = ref('')
+const modalInert = ref(true)
 
-// Validación de formulario
-const formValido = computed(() =>
-  form.value.cuentaOrigen &&
-  form.value.cuentaDestino &&
-  form.value.monto &&
-  parseFloat(form.value.monto) > 0 &&
-  destinatario.value
-)
+const formValido = computed(() => {
+  const destinoAccount = cuentasDestino.value.find(c => c.numero === form.value.cuentaDestino)
+  return (
+    form.value.cuentaOrigen &&
+    form.value.cuentaDestino &&
+    form.value.monto &&
+    parseFloat(form.value.monto) > 0 &&
+    destinoAccount &&
+    cuentas.value.find(c => c.id === form.value.cuentaOrigen)?.id !== destinoAccount.id
+  )
+})
 
-// Funciones de ayuda
+const cuentasDestinoFiltradas = computed(() => {
+  const search = form.value.identificador.trim().toLowerCase()
+  if (!search) return cuentasDestino.value
+  return cuentasDestino.value.filter(cuenta =>
+    cuenta.numero.toLowerCase().includes(search)
+  )
+})
+
 function formatAccountNumber(numero) {
   return numero.replace(/(\d{4})(\d{4})/, '$1-$2')
 }
 
 function accountTypeClass(tipo) {
-  return tipo === 'ahorro' ? 'account-icon-savings' : 'account-icon-current'
+  return tipo && tipo.toLowerCase().includes('ahorro') ? 'account-icon-savings' : 'account-icon-current'
 }
 
 function accountTypeIcon(tipo) {
-  return tipo === 'ahorro' ? 'bi bi-piggy-bank' : 'bi bi-wallet2'
+  return tipo && tipo.toLowerCase().includes('ahorro') ? 'bi bi-piggy-bank' : 'bi bi-wallet2'
 }
 
 function glowColor(tipo) {
-  return tipo === 'ahorro' ? 'glow-green' : 'glow-blue'
+  return tipo && tipo.toLowerCase().includes('ahorro') ? 'glow-green' : 'glow-blue'
 }
-// Funciones principales
+
+function particleStyle(i) {
+  return {
+    width: `${Math.random() * 10 + 5}px`,
+    height: `${Math.random() * 10 + 5}px`,
+    left: `${Math.random() * 100}%`,
+    top: `${Math.random() * 100}%`,
+    animationDelay: `${Math.random() * 15}s`,
+    animationDuration: `${Math.random() * 20 + 10}s`
+  }
+}
+
 function selectCuentaOrigen(id) {
   form.value.cuentaOrigen = id
+  form.value.cuentaDestino = null
 }
 
-function buscarDestinatario() {
-  const identificador = form.value.identificador.trim()
-  errorIdentificador.value = ''
-  destinatario.value = null
-  form.value.cuentaDestino = ''
-
-  if (identificador) {
-    // Simular búsqueda en la base de datos
-    const cliente = clientes.value.find(
-      c => c.document_number === identificador || c.email === identificador
-    )
-    if (cliente) {
-      destinatario.value = cliente
-    } else {
-      errorIdentificador.value = 'No se encontró un cliente con ese documento o email.'
-    }
-  }
+function selectCuentaDestino(numero) {
+  form.value.cuentaDestino = numero
 }
 
 function volver() {
   router.go(-1)
 }
 
-function generarComprobante() {
-  const comprobante = {
-    origen: cuentas.value.find(c => c.id === parseInt(form.value.cuentaOrigen)),
-    destino: destinatario.value.cuentas.find(c => c.numero === form.value.cuentaDestino),
-    monto: parseFloat(form.value.monto),
-    fecha: new Date().toLocaleString(),
-    codigo: `TRF-${Math.floor(Math.random() * 1000000)}`,
-    destinatario: destinatario.value.full_name
+function closeModal() {
+  modalInert.value = true
+}
+
+async function generarComprobante() {
+  try {
+    const origen = cuentas.value.find(c => c.id === parseInt(form.value.cuentaOrigen))
+    const destino = cuentasDestino.value.find(c => c.numero === form.value.cuentaDestino)
+    const comprobante = {
+      id: `TRF-${Math.floor(Math.random() * 1000000)}`,
+      origen: origen ? origen.numero : 'Desconocido',
+      destino: form.value.cuentaDestino || 'Desconocido',
+      banco: 'propio',
+      monto: parseFloat(form.value.monto) || 0,
+      fecha: new Date().toLocaleString(),
+      estado: 'completado',
+      destinatario: destino ? destino.clienteNombre : 'Desconocido'
+    }
+    
+    router.push({
+      name: 'ComprobanteTransferencia',
+      params: { id: comprobante.id },
+      state: { comprobante }
+    })
+  } catch (error) {
+    console.error('Error al generar comprobante:', error)
   }
-  
-  router.push({
-    name: 'ComprobanteTransferencia',
-    params: { id: comprobante.codigo },
-    state: { comprobante }
-  })
 }
 
 async function enviarTransferencia() {
-  const origen = cuentas.value.find(c => c.id === parseInt(form.value.cuentaOrigen))
-  const monto = parseFloat(form.value.monto)
   const modal = new bootstrap.Modal(document.getElementById('transferResultModal'))
+  const monto = parseFloat(form.value.monto)
+  const destinoAccount = cuentasDestino.value.find(c => c.numero === form.value.cuentaDestino)
+  const destinoAccountId = destinoAccount ? destinoAccount.id : null
 
-  if (origen.saldo < monto) {
+  if (!destinoAccountId) {
     transferSuccess.value = false
-    transferMessage.value = 'Saldo insuficiente para realizar la transferencia.'
+    transferMessage.value = 'Cuenta destino no encontrada.'
+    modalInert.value = false
     modal.show()
     return
   }
 
   try {
-    origen.saldo -= monto
-    const cuentaDestino = destinatario.value.cuentas.find(c => c.numero === form.value.cuentaDestino)
-    cuentaDestino.saldo += monto
+    modalInert.value = false
+    const origen = cuentas.value.find(c => c.id === parseInt(form.value.cuentaOrigen))
+    if (!origen || origen.saldo < monto) {
+      transferSuccess.value = false
+      transferMessage.value = 'Saldo insuficiente en la cuenta origen.'
+      modal.show()
+      return
+    }
 
-    const transfer = {
-      id: Math.floor(Math.random() * 1000000),
-      origin_account_id: form.value.cuentaOrigen,
-      destination_account_number: form.value.cuentaDestino,
-      destination_bank: 'propio', // Cambiar a otro banco si es externo
+    // Realizar retiro y depósito
+    const [withdrawResponse, depositResponse] = await Promise.all([
+      fetch(`${accountServiceUrl}/${form.value.cuentaOrigen}/withdraw?amount=${monto}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' }
+      }),
+      fetch(`${accountServiceUrl}/${destinoAccountId}/deposit?amount=${monto}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' }
+      })
+    ])
+
+    // Verificar respuestas de retiro y depósito
+    if (!withdrawResponse.ok) {
+      throw new Error(`Error en retiro: HTTP ${withdrawResponse.status}`)
+    }
+    if (!depositResponse.ok) {
+      throw new Error(`Error en depósito: HTTP ${depositResponse.status}`)
+    }
+
+    const withdrawData = await withdrawResponse.json()
+    const depositData = await depositResponse.json()
+
+    // Guardar la transferencia
+    const transferData = {
+      originAccountId: form.value.cuentaOrigen,
+      destinationAccountNumber: form.value.cuentaDestino,
+      destinationBank: 'propio',
       amount: monto,
-      transfer_date: new Date().toISOString(),
       status: 'completado'
     }
+
+    const transferResponse = await fetch(transferServiceUrl, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(transferData)
+    })
+
+    if (!transferResponse.ok) {
+      throw new Error(`Error al registrar la transferencia: HTTP ${transferResponse.status}`)
+    }
+
+    const transfer = await transferResponse.json()
+    console.log('Transferencia registrada:', transfer)
+
+    // Actualizar saldos localmente
+    cuentas.value = cuentas.value.map(c => {
+      if (c.id === parseInt(form.value.cuentaOrigen)) {
+        return { ...c, saldo: parseFloat(withdrawData.balance) }
+      }
+      return c
+    })
+    cuentasDestino.value = cuentasDestino.value.map(c => {
+      if (c.id === destinoAccountId) {
+        return { ...c, saldo: parseFloat(depositData.balance) }
+      }
+      return c
+    })
 
     transferSuccess.value = true
     transferMessage.value = 'Transferencia realizada con éxito.'
@@ -377,20 +419,155 @@ async function enviarTransferencia() {
     form.value.cuentaOrigen = null
     form.value.cuentaDestino = ''
     form.value.identificador = ''
-    destinatario.value = null
   } catch (error) {
     transferSuccess.value = false
-    transferMessage.value = 'Error al procesar la transferencia. Intente nuevamente.'
+    if (error.message.includes('400')) {
+      transferMessage.value = error.message.includes('registrar') 
+        ? 'Error al registrar la transferencia.'
+        : 'Saldo insuficiente o monto inválido.'
+    } else if (error.message.includes('404')) {
+      transferMessage.value = 'Una de las cuentas no fue encontrada.'
+    } else {
+      transferMessage.value = 'Error al procesar la transferencia. Intente nuevamente.'
+    }
     modal.show()
+    console.error('Error en la transferencia:', error)
   }
 }
 
-// Verificar número de cuentas al montar el componente
-onMounted(() => {
-  if (cuentas.value.length <= 1) {
+async function fetchCuentasUsuario() {
+  console.log('Iniciando carga de cuentas para clientId:', clientId)
+  try {
+    const response = await fetch(`${accountServiceUrl}/client/${clientId}`)
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`)
+    }
+    const data = await response.json()
+    console.log('Cuentas crudas del backend:', data)
+    
+    cuentas.value = data.map(c => ({
+      id: c.id,
+      numero: c.accountNumber,
+      tipo: c.accountType.toLowerCase(),
+      saldo: parseFloat(c.balance)
+    }))
+    
+    console.log('Cuentas mapeadas:', cuentas.value)
+
+    if (cuentas.value.length === 0) {
+      console.warn('No se encontraron cuentas válidas')
+      throw new Error('No se encontraron cuentas válidas')
+    }
+  } catch (error) {
+    console.error('Error al cargar cuentas:', error)
+    modalInert.value = false
     const modal = new bootstrap.Modal(document.getElementById('singleAccountModal'))
     modal.show()
+    cuentas.value = [
+      { id: 1, numero: '10010001', tipo: 'ahorro', saldo: 1500.50 },
+      { id: 2, numero: '10010002', tipo: 'corriente', saldo: 980.00 }
+    ]
+    console.log('Usando datos simulados debido a error:', cuentas.value)
   }
+}
+
+async function fetchCuentasDestino() {
+  console.log('Iniciando carga de cuentas destino')
+  try {
+    const clientsResponse = await fetch(clientServiceUrl)
+    if (!clientsResponse.ok) {
+      throw new Error(`HTTP error! status: ${clientsResponse.status}`)
+    }
+    const clients = await clientsResponse.json()
+    console.log('Clientes crudos del backend:', clients)
+    
+    const accounts = []
+    for (const client of clients.filter(c => c.id !== clientId)) {
+      try {
+        const accountsResponse = await fetch(`${accountServiceUrl}/client/${client.id}`)
+        if (!accountsResponse.ok) {
+          console.warn(`No se encontraron cuentas para el cliente ${client.id}`)
+          continue
+        }
+        const clientAccounts = await accountsResponse.json()
+        console.log(`Cuentas para cliente ${client.id}:`, clientAccounts)
+        accounts.push(...clientAccounts.map(a => ({
+          id: a.id,
+          numero: a.accountNumber,
+          tipo: a.accountType.toLowerCase(),
+          saldo: parseFloat(a.balance),
+          clienteId: client.id,
+          clienteNombre: client.fullName,
+          clienteDocumento: client.documentNumber,
+          clienteEmail: client.email
+        })))
+      } catch (error) {
+        console.warn(`Error al cargar cuentas para el cliente ${client.id}:`, error)
+      }
+    }
+    
+    cuentasDestino.value = accounts
+    console.log('Cuentas destino cargadas:', cuentasDestino.value)
+    
+    if (cuentasDestino.value.length === 0) {
+      console.warn('No se encontraron cuentas destino válidas')
+      errorIdentificador.value = 'No se encontraron cuentas destino.'
+      cuentasDestino.value = [
+        {
+          id: 3,
+          numero: '10020001',
+          tipo: 'ahorro',
+          saldo: 500.00,
+          clienteId: 2,
+          clienteNombre: 'Selina Kyle',
+          clienteDocumento: '87654321',
+          clienteEmail: 'selina@example.com'
+        },
+        {
+          id: 4,
+          numero: '10020002',
+          tipo: 'corriente',
+          saldo: 1200.00,
+          clienteId: 2,
+          clienteNombre: 'Selina Kyle',
+          clienteDocumento: '87654321',
+          clienteEmail: 'selina@example.com'
+        }
+      ]
+      console.log('Usando datos simulados de cuentas destino:', cuentasDestino.value)
+    }
+  } catch (error) {
+    console.error('Error al cargar cuentas destino:', error)
+    errorIdentificador.value = 'Error al cargar datos de cuentas destino.'
+    cuentasDestino.value = [
+      {
+        id: 3,
+        numero: '10020001',
+        tipo: 'ahorro',
+        saldo: 500.00,
+        clienteId: 2,
+        clienteNombre: 'Selina Kyle',
+        clienteDocumento: '87654321',
+        clienteEmail: 'selina@example.com'
+      },
+      {
+        id: 4,
+        numero: '10020002',
+        tipo: 'corriente',
+        saldo: 1200.00,
+        clienteId: 2,
+        clienteNombre: 'Selina Kyle',
+        clienteDocumento: '87654321',
+        clienteEmail: 'selina@example.com'
+      }
+    ]
+    console.log('Usando datos simulados de cuentas destino debido a error:', cuentasDestino.value)
+  }
+}
+
+onMounted(async () => {
+  await fetchCuentasUsuario()
+  await fetchCuentasDestino()
 })
 </script>
 
@@ -406,6 +583,7 @@ onMounted(() => {
   flex-direction: column;
   align-items: center;
   padding: 20px;
+  overflow-x: hidden;
   position: relative;
 }
 
@@ -437,13 +615,6 @@ onMounted(() => {
   filter: invert(1);
 }
 
-.text-danger {
-  color: #ff6b6b;
-  font-size: 0.9rem;
-  margin-top: 5px;
-}
-
-/* Estilos principales */
 .back-button {
   position: absolute;
   top: 20px;
@@ -461,6 +632,7 @@ onMounted(() => {
   backdrop-filter: blur(5px);
   z-index: 10;
 }
+
 .back-button:hover {
   background: rgba(255, 255, 255, 0.2);
   transform: translateX(-3px);
@@ -490,7 +662,7 @@ onMounted(() => {
   font-weight: 800;
   background: linear-gradient(to right, #3ded97, #2fa8f8);
   -webkit-background-clip: text;
-  background-clip: text; 
+  background-clip: text;
   -webkit-text-fill-color: transparent;
   margin-bottom: 15px;
   text-shadow: 0 0 20px rgba(61, 237, 151, 0.3);
@@ -584,6 +756,12 @@ onMounted(() => {
   box-shadow: 0 0 15px rgba(61, 237, 151, 0.2) !important;
 }
 
+.selected-destination {
+  border: 2px solid #2fa8f8 !important;
+  background: rgba(47, 168, 248, 0.1) !important;
+  box-shadow: 0 0 15px rgba(47, 168, 248, 0.2) !important;
+}
+
 .icono-wrapper {
   position: relative;
   width: 60px;
@@ -673,11 +851,10 @@ onMounted(() => {
 }
 
 .form-label {
-  font-size: 1.2rem;
+  font-size: 1.1rem;
   color: #fff;
   display: flex;
   align-items: center;
-  font-weight: bold;
   gap: 10px;
 }
 
@@ -713,6 +890,11 @@ onMounted(() => {
   box-shadow: 0 0 0 2px rgba(61, 237, 151, 0.3);
 }
 
+.text-danger {
+  color: #ff6b6b;
+  font-size: 0.9rem;
+}
+
 .buttons-group {
   display: flex;
   gap: 15px;
@@ -720,7 +902,7 @@ onMounted(() => {
 }
 
 .btn-accion, .btn-comprobante {
-   padding: 12px 25px;
+  padding: 12px 25px;
   border: none;
   border-radius: 50px;
   font-weight: 600;
@@ -777,6 +959,23 @@ onMounted(() => {
   width: 200px;
   height: 1px;
   background: linear-gradient(90deg, transparent, rgba(61, 237, 151, 0.5), transparent);
+}
+
+.bg-particles {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  z-index: -1;
+}
+
+.particle {
+  position: absolute;
+  background: rgba(61, 237, 151, 0.3);
+  border-radius: 50%;
+  animation: float linear infinite;
 }
 
 @keyframes float {

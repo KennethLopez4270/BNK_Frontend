@@ -13,7 +13,13 @@
     </section>
 
     <div class="transferencia-content">
-      <div class="detalle-section animate__animated animate__zoomIn">
+      <!-- Mostrar indicador de carga -->
+      <div v-if="isLoading" class="text-center animate__animated animate__fadeIn">
+        <p>Cargando transferencia...</p>
+      </div>
+
+      <!-- Mostrar detalles solo si transferencia no es null -->
+      <div v-else-if="transferencia" class="detalle-section animate__animated animate__zoomIn">
         <div class="detalle-item animate__animated animate__fadeInUp" :style="{ animationDelay: '0.1s' }">
           <label class="detalle-label"><i class="bi bi-hash"></i> ID de Transferencia:</label>
           <div class="detalle-value">{{ transferencia.id }}</div>
@@ -75,6 +81,8 @@
           </router-link>
         </div>
       </div>
+
+      <!-- Modal para errores -->
       <div
         class="modal fade"
         id="noTransferenciaModal"
@@ -94,7 +102,7 @@
               ></button>
             </div>
             <div class="modal-body">
-              No se encontró la transferencia con el ID especificado.
+              No se encontró la transferencia con1 con el ID especificado.
             </div>
             <div class="modal-footer">
               <button
@@ -117,28 +125,19 @@
     </footer>
   </div>
 </template>
-
 <script setup>
 import { ref, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import 'animate.css'
 import * as bootstrap from 'bootstrap'
 
-// Obtener el ID de la transferencia desde la URL
 const route = useRoute()
 const router = useRouter()
 const transferenciaId = route.params.id
-
-// Mock temporal: reemplazar con fetch real
-const transferencia = ref({
-  id: transferenciaId,
-  origen: '1001-0002',
-  destino: '3009-9988',
-  banco: 'Banco Mercantil Santa Cruz',
-  monto: 350.00,
-  fecha: '2025-05-17T18:00:00Z',
-  estado: 'completado'
-})
+const transferencia = ref(null)
+const isLoading = ref(false)
+const transferServiceUrl = 'http://localhost:8084/api/transfers'
+const accountServiceUrl = 'http://localhost:8082/api/accounts'
 
 function formatFecha(fechaISO) {
   const fecha = new Date(fechaISO)
@@ -147,17 +146,17 @@ function formatFecha(fechaISO) {
 
 function estadoClass(estado) {
   return {
-    'estado-badge estado-completado': estado === 'completado',
-    'estado-badge estado-pendiente': estado === 'pendiente',
-    'estado-badge estado-fallido': estado === 'fallido'
+    'estado-badge estado-completado': estado.toLowerCase() === 'completado',
+    'estado-badge estado-pendiente': estado.toLowerCase() === 'pendiente',
+    'estado-badge estado-fallido': estado.toLowerCase() === 'fallido'
   }
 }
 
 function estadoIcon(estado) {
   return {
-    'bi bi-check-circle': estado === 'completado',
-    'bi bi-hourglass-split': estado === 'pendiente',
-    'bi bi-x-circle': estado === 'fallido'
+    'bi bi-check-circle': estado.toLowerCase() === 'completado',
+    'bi bi-hourglass-split': estado.toLowerCase() === 'pendiente',
+    'bi bi-x-circle': estado.toLowerCase() === 'fallido'
   }
 }
 
@@ -165,7 +164,6 @@ function volver() {
   router.push('/historial-transferencias')
 }
 
-// Animación de pulsación para botones
 function pulseAnimation(event) {
   const element = event.target
   element.classList.add('animate__pulse')
@@ -173,11 +171,66 @@ function pulseAnimation(event) {
     element.classList.remove('animate__pulse')
   }, 300)
 }
-onMounted(() => {
-  // Simulación: en el backend, harías un fetch a /api/transfers/:id
-  if (!transferenciaId || transferenciaId === 'undefined') {
+
+async function getAccountNumber(accountId) {
+  try {
+    const response = await fetch(`${accountServiceUrl}/${accountId}`)
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`)
+    }
+    const account = await response.json()
+    return account.accountNumber || 'Desconocido'
+  } catch (error) {
+    console.error(`Error al obtener número de cuenta para ID ${accountId}:`, error)
+    return 'Desconocido'
+  }
+}
+
+async function fetchTransferencia() {
+  isLoading.value = true
+  try {
+    const response = await fetch(`${transferServiceUrl}/${transferenciaId}`)
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`)
+    }
+    const data = await response.json()
+    console.log('Transferencia cruda del backend:', data)
+
+    const originAccountNumber = await getAccountNumber(data.originAccountId)
+    transferencia.value = {
+      id: data.id,
+      origen: originAccountNumber,
+      destino: data.destinationAccountNumber || 'Desconocido',
+      banco: data.destinationBank || 'Desconocido',
+      monto: data.amount || 0,
+      fecha: data.transferDate || new Date().toISOString(),
+      estado: data.status || 'pendiente'
+    }
+    console.log('Transferencia mapeada:', transferencia.value)
+  } catch (error) {
+    console.error('Error al cargar transferencia:', error)
     const modal = new bootstrap.Modal(document.getElementById('noTransferenciaModal'))
     modal.show()
+  } finally {
+    isLoading.value = false
+  }
+}
+
+onMounted(() => {
+  if (!transferenciaId || transferenciaId === 'undefined') {
+    console.log('ID de transferencia inválido:', transferenciaId)
+    const modal = new bootstrap.Modal(document.getElementById('noTransferenciaModal'))
+    modal.show()
+    return
+  }
+
+  const stateTransferencia = route.state?.transferencia
+  if (stateTransferencia) {
+    console.log('Transferencia recibida desde state:', stateTransferencia)
+    transferencia.value = stateTransferencia
+  } else {
+    console.log('No hay transferencia en state, consultando backend para ID:', transferenciaId)
+    fetchTransferencia()
   }
 })
 </script>

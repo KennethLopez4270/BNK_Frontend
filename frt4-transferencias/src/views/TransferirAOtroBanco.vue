@@ -1,8 +1,10 @@
 <template>
   <div class="transferencias-app">
+    <!-- Botón de volver -->
     <button @click="volver" class="back-button animate__animated animate__fadeIn">
       <i class="bi bi-arrow-left"></i> Volver
     </button>
+
     <section class="hero animate__animated animate__fadeIn">
       <h1 class="titulo">Transferencia a otro banco</h1>
       <p class="descripcion">
@@ -46,28 +48,28 @@
           <div class="form-group animate__animated animate__fadeIn" style="animation-delay: 0.2s">
             <label class="form-label">Nombre completo</label>
             <div class="input-group">
-            <input
-              type="text"
-              class="form-control"
-              v-model="form.destinatarioNombre"
-              required
-              placeholder="Ej: Ana López"
-            />
-          </div>
+              <input
+                type="text"
+                class="form-control"
+                v-model="form.destinatarioNombre"
+                required
+                placeholder="Ej: Ana López"
+              />
+            </div>
           </div>
           <br>
 
           <div class="form-group animate__animated animate__fadeIn" style="animation-delay: 0.3s">
             <label for="cuentaDestino" class="form-label">Número de cuenta destino</label>
             <div class="input-group">
-            <input
-              type="text"
-              class="form-control"
-              id="cuentaDestino"
-              v-model="form.cuentaDestino"
-              required
-              placeholder="Ej: 3401-998877"
-            />
+              <input
+                type="text"
+                class="form-control"
+                id="cuentaDestino"
+                v-model="form.cuentaDestino"
+                required
+                placeholder="Ej: 3401-998877"
+              />
             </div>
           </div>
           <br>
@@ -75,25 +77,28 @@
           <div class="form-group animate__animated animate__fadeIn" style="animation-delay: 0.4s">
             <label for="bancoDestino" class="form-label">Banco destino</label>
             <div class="input-group">
-            <select class="form-control" id="bancoDestino" v-model="form.bancoDestino" required>
-              <option disabled value="">Seleccione un banco</option>
-              <option value="Banco Unión">Banco Unión</option>
-              <option value="Banco Mercantil Santa Cruz">Banco Mercantil Santa Cruz</option>
-              <option value="BNB">BNB</option>
-              <option value="Fassil">Fassil</option>
-              <option value="Prodem">Prodem</option>
-              <option value="Otro">Otro</option>
-            </select>
-          </div></div><br>
+              <select class="form-control" id="bancoDestino" v-model="form.bancoDestino" required>
+                <option disabled value="">Seleccione un banco</option>
+                <option value="Banco Unión">Banco Unión</option>
+                <option value="Banco Mercantil Santa Cruz">Banco Mercantil Santa Cruz</option>
+                <option value="BNB">BNB</option>
+                <option value="Fassil">Fassil</option>
+                <option value="Prodem">Prodem</option>
+                <option value="Otro">Otro</option>
+              </select>
+            </div>
+          </div>
+          <br>
+
           <div class="form-group animate__animated animate__fadeIn" style="animation-delay: 0.45s">
             <label for="tipoCuentaDestino" class="form-label">Tipo de cuenta destino</label>
             <div class="input-group">
-            <select class="form-control" id="tipoCuentaDestino" v-model="form.tipoCuentaDestino" required>
-              <option disabled value="">Seleccione tipo de cuenta</option>
-              <option value="ahorro">Ahorro</option>
-              <option value="corriente">Corriente</option>
-            </select>
-          </div>
+              <select class="form-control" id="tipoCuentaDestino" v-model="form.tipoCuentaDestino" required>
+                <option disabled value="">Seleccione tipo de cuenta</option>
+                <option value="ahorro">Ahorro</option>
+                <option value="corriente">Corriente</option>
+              </select>
+            </div>
           </div>
         </div>
       </div>
@@ -144,6 +149,83 @@
     <footer class="footer animate__animated animate__fadeIn" style="animation-delay: 0.6s">
       © 2025 Banco Digital. Todos los derechos reservados.
     </footer>
+
+    <!-- Modal para error de cuentas -->
+    <div
+      class="modal fade"
+      id="singleAccountModal"
+      tabindex="-1"
+      aria-labelledby="singleAccountModalLabel"
+      :inert="modalInert"
+    >
+      <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title" id="singleAccountModalLabel">Advertencia</h5>
+            <button
+              type="button"
+              class="btn-close"
+              data-bs-dismiss="modal"
+              aria-label="Close"
+              @click="closeModal"
+            ></button>
+          </div>
+          <div class="modal-body">
+            No se encontraron cuentas válidas para realizar la transferencia.
+          </div>
+          <div class="modal-footer">
+            <button
+              type="button"
+              class="btn btn-secondary"
+              @click="volver"
+              data-bs-dismiss="modal"
+            >
+              Volver
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Modal para resultado de transferencia -->
+    <div
+      class="modal fade"
+      id="transferResultModal"
+      tabindex="-1"
+      aria-labelledby="transferResultModalLabel"
+      :inert="modalInert"
+    >
+      <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title" id="transferResultModalLabel">
+              {{ transferSuccess ? 'Éxito' : 'Error' }}
+            </h5>
+            <button
+              type="button"
+              class="btn-close"
+              data-bs-dismiss="modal"
+              aria-label="Close"
+              @click="closeModal"
+            ></button>
+          </div>
+          <div class="modal-body">
+            {{ transferMessage }}
+          </div>
+          <div class="modal-footer">
+            <button
+              type="button"
+              class="btn"
+              :class="transferSuccess ? 'btn-success' : 'btn-danger'"
+              data-bs-dismiss="modal"
+              @click="closeModal"
+            >
+              Aceptar
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -154,35 +236,34 @@ import 'animate.css'
 import * as bootstrap from 'bootstrap'
 
 const router = useRouter()
+const clientId = 1
+const accountServiceUrl = 'http://localhost:8082/api/accounts'
+const transferServiceUrl = 'http://localhost:8084/api/transfers'
 
-const cuentas = ref([
-  { id: 1, numero: '1001-0001', tipo: 'ahorro', saldo: 1200.00 },
-  { id: 2, numero: '1001-0002', tipo: 'corriente', saldo: 750.75 }
-])
-
+const cuentas = ref([])
 const form = ref({
   cuentaOrigen: null,
   cuentaDestino: '',
   bancoDestino: '',
-  tipoCuentaDestino: '',  // agregado
+  tipoCuentaDestino: '',
   monto: '',
   destinatarioNombre: ''
 })
-
 const transferSuccess = ref(false)
 const transferMessage = ref('')
+const modalInert = ref(true)
 
 const formValido = computed(() =>
   form.value.cuentaOrigen &&
   form.value.cuentaDestino.trim() !== '' &&
   form.value.bancoDestino.trim() !== '' &&
-  form.value.tipoCuentaDestino.trim() !== '' &&  // agregado
+  form.value.tipoCuentaDestino.trim() !== '' &&
   form.value.destinatarioNombre.trim() !== '' &&
   parseFloat(form.value.monto) > 0
 )
 
 function formatAccountNumber(numero) {
-  return numero
+  return numero.replace(/(\d{4})(\d{4})/, '$1-$2')
 }
 
 function accountTypeClass(tipo) {
@@ -205,81 +286,137 @@ function volver() {
   router.go(-1)
 }
 
-function generarComprobante() {
-  const comprobante = {
-    origen: cuentas.value.find(c => c.id === parseInt(form.value.cuentaOrigen)),
-    destino: {
-      numero: form.value.cuentaDestino,
-      banco: form.value.bancoDestino,
-      nombre: form.value.destinatarioNombre,
-      tipoCuenta: form.value.tipoCuentaDestino  // agregado
-    },
-    monto: parseFloat(form.value.monto),
-    fecha: new Date().toLocaleString(),
-    codigo: `TRF-${Math.floor(Math.random() * 1000000)}`
-  }
+function closeModal() {
+  modalInert.value = true
+}
 
-  router.push({
-    name: 'ComprobanteTransferencia',
-    params: { id: comprobante.codigo },
-    state: { comprobante }
-  })
+async function generarComprobante() {
+  try {
+    const origen = cuentas.value.find(c => c.id === parseInt(form.value.cuentaOrigen))
+    const comprobante = {
+      id: `TRF-${Math.floor(Math.random() * 1000000)}`,
+      origen: origen ? origen.numero : 'Desconocido',
+      destino: form.value.cuentaDestino || 'Desconocido',
+      banco: form.value.bancoDestino || 'Desconocido',
+      tipoCuenta: form.value.tipoCuentaDestino || 'Desconocido',
+      monto: parseFloat(form.value.monto) || 0,
+      fecha: new Date().toLocaleString(),
+      destinatario: form.value.destinatarioNombre || 'Desconocido'
+    }
+
+    router.push({
+      name: 'ComprobanteTransferencia',
+      params: { id: comprobante.id },
+      state: { comprobante }
+    })
+  } catch (error) {
+    console.error('Error al generar comprobante:', error)
+  }
 }
 
 async function enviarTransferencia() {
-  const origen = cuentas.value.find(c => c.id === parseInt(form.value.cuentaOrigen))
-  const monto = parseFloat(form.value.monto)
   const modal = new bootstrap.Modal(document.getElementById('transferResultModal'))
-
-  if (origen.saldo < monto) {
-    transferSuccess.value = false
-    transferMessage.value = 'Saldo insuficiente para realizar la transferencia.'
-    modal.show()
-    return
-  }
+  const monto = parseFloat(form.value.monto)
 
   try {
-    origen.saldo -= monto
-
-    // Simulación del registro de transferencia
-    const transferencia = {
-      origin_account_id: form.value.cuentaOrigen,
-      destination_account_number: form.value.cuentaDestino,
-      destination_bank: form.value.bancoDestino,
-      destination_account_type: form.value.tipoCuentaDestino,  // agregado
-      destination_name: form.value.destinatarioNombre,
-      amount: monto,
-      transfer_date: new Date().toISOString(),
-      status: 'completado'
+    modalInert.value = false
+    const origen = cuentas.value.find(c => c.id === parseInt(form.value.cuentaOrigen))
+    if (!origen || origen.saldo < monto) {
+      transferSuccess.value = false
+      transferMessage.value = 'Saldo insuficiente o cuenta origen no válida.'
+      modal.show()
+      return
     }
 
+    const transferData = {
+      originAccountId: form.value.cuentaOrigen,
+      destinationAccountNumber: form.value.cuentaDestino,
+      destinationBank: form.value.bancoDestino,
+      destinationAccountType: form.value.tipoCuentaDestino,
+      destinationName: form.value.destinatarioNombre,
+      amount: monto,
+      status: 'pendiente'
+    }
+
+    const response = await fetch(transferServiceUrl, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(transferData)
+    })
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`)
+    }
+
+    const transfer = await response.json()
+    console.log('Transferencia registrada como pendiente:', transfer)
+
     transferSuccess.value = true
-    transferMessage.value = 'Transferencia realizada con éxito.'
+    transferMessage.value = 'Transferencia registrada como pendiente.'
     modal.show()
 
     form.value = {
       cuentaOrigen: null,
       cuentaDestino: '',
       bancoDestino: '',
-      tipoCuentaDestino: '',  // agregado
+      tipoCuentaDestino: '',
       monto: '',
       destinatarioNombre: ''
     }
   } catch (error) {
     transferSuccess.value = false
-    transferMessage.value = 'Error al procesar la transferencia. Intente nuevamente.'
+    if (error.message.includes('400')) {
+      transferMessage.value = 'Saldo insuficiente o datos inválidos.'
+    } else if (error.message.includes('404')) {
+      transferMessage.value = 'Cuenta no encontrada.'
+    } else {
+      transferMessage.value = 'Error al procesar la transferencia. Intente nuevamente.'
+    }
     modal.show()
+    console.error('Error en la transferencia:', error)
   }
 }
 
-onMounted(() => {
-  if (cuentas.value.length <= 1) {
+async function fetchCuentasUsuario() {
+  console.log('Iniciando carga de cuentas para clientId:', clientId)
+  try {
+    const response = await fetch(`${accountServiceUrl}/client/${clientId}`)
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`)
+    }
+    const data = await response.json()
+    console.log('Cuentas crudas del backend:', data)
+
+    cuentas.value = data.map(c => ({
+      id: c.id,
+      numero: c.accountNumber,
+      tipo: c.accountType.toLowerCase(),
+      saldo: parseFloat(c.balance)
+    }))
+
+    console.log('Cuentas mapeadas:', cuentas.value)
+
+    if (cuentas.value.length === 0) {
+      console.warn('No se encontraron cuentas válidas')
+      throw new Error('No se encontraron cuentas válidas')
+    }
+  } catch (error) {
+    console.error('Error al cargar cuentas:', error)
+    modalInert.value = false
     const modal = new bootstrap.Modal(document.getElementById('singleAccountModal'))
     modal.show()
+    cuentas.value = [
+      { id: 1, numero: '10010001', tipo: 'ahorro', saldo: 1200.00 },
+      { id: 2, numero: '10010002', tipo: 'corriente', saldo: 750.75 }
+    ]
+    console.log('Usando datos simulados debido a error:', cuentas.value)
   }
+}
+
+onMounted(async () => {
+  await fetchCuentasUsuario()
 })
 </script>
-
 
 <style scoped>
 @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
@@ -378,7 +515,7 @@ onMounted(() => {
   font-weight: 800;
   background: linear-gradient(to right, #3ded97, #2fa8f8);
   -webkit-background-clip: text;
-  background-clip: text; 
+  background-clip: text;
   -webkit-text-fill-color: transparent;
   margin-bottom: 15px;
   text-shadow: 0 0 20px rgba(61, 237, 151, 0.3);
@@ -665,17 +802,6 @@ onMounted(() => {
   width: 200px;
   height: 1px;
   background: linear-gradient(90deg, transparent, rgba(61, 237, 151, 0.5), transparent);
-}
-
-@keyframes float {
-  0% {
-    transform: translateY(0) rotate(0deg);
-    opacity: 1;
-  }
-  100% {
-    transform: translateY(-1000px) rotate(720deg);
-    opacity: 0;
-  }
 }
 
 @media (max-width: 992px) {

@@ -76,13 +76,13 @@
                   </span>
                 </td>
                 <td>
-                  <router-link
-                    :to="`/detalle-transferencia/${transferencia.id}`"
+                  <button
                     class="btn-accion btn-sm"
+                    @click="verDetalle(transferencia)"
                     @mousedown="pulseAnimation"
                   >
                     <i class="bi bi-eye"></i> Ver
-                  </router-link>
+                  </button>
                 </td>
               </tr>
             </tbody>
@@ -138,45 +138,18 @@ import 'animate.css'
 import * as bootstrap from 'bootstrap'
 
 const router = useRouter()
-const transferencias = ref([
-  {
-    id: 1,
-    origen: '1001-0001',
-    destino: '1001-0002',
-    banco: 'propio',
-    monto: 200.00,
-    fecha: '2025-05-16T10:45:00Z',
-    estado: 'completado',
-    tipo: 'propias'
-  },
-  {
-    id: 2,
-    origen: '1001-0001',
-    destino: '2002-0005',
-    banco: 'propio',
-    monto: 100.50,
-    fecha: '2025-05-17T13:20:00Z',
-    estado: 'completado',
-    tipo: 'terceros'
-  },
-  {
-    id: 3,
-    origen: '1001-0002',
-    destino: '3009-9988',
-    banco: 'Banco Mercantil Santa Cruz',
-    monto: 350.00,
-    fecha: '2025-05-17T18:00:00Z',
-    estado: 'pendiente',
-    tipo: 'interbancaria'
-  }
-])
-
+const clientId = 1
+const transferencias = ref([])
 const filtro = ref('')
+const transferServiceUrl = 'http://localhost:8084/api/transfers'
+const accountServiceUrl = 'http://localhost:8082/api/accounts'
 
 const transferenciasFiltradas = computed(() => {
-  return filtro.value
+  const filtered = filtro.value
     ? transferencias.value.filter(t => t.tipo === filtro.value)
     : transferencias.value
+  console.log('Transferencias filtradas:', filtered)
+  return filtered
 })
 
 function formatFecha(fechaISO) {
@@ -186,17 +159,17 @@ function formatFecha(fechaISO) {
 
 function estadoClass(estado) {
   return {
-    'estado-badge estado-completado': estado === 'completado',
-    'estado-badge estado-pendiente': estado === 'pendiente',
-    'estado-badge estado-fallido': estado === 'fallido'
+    'estado-badge estado-completado': estado.toLowerCase() === 'completado',
+    'estado-badge estado-pendiente': estado.toLowerCase() === 'pendiente',
+    'estado-badge estado-fallido': estado.toLowerCase() === 'fallido'
   }
 }
 
 function estadoIcon(estado) {
   return {
-    'bi bi-check-circle': estado === 'completado',
-    'bi bi-hourglass-split': estado === 'pendiente',
-    'bi bi-x-circle': estado === 'fallido'
+    'bi bi-check-circle': estado.toLowerCase() === 'completado',
+    'bi bi-hourglass-split': estado.toLowerCase() === 'pendiente',
+    'bi bi-x-circle': estado.toLowerCase() === 'fallido'
   }
 }
 
@@ -204,7 +177,6 @@ function volver() {
   router.push('/')
 }
 
-// Animación de pulsación para botones
 function pulseAnimation(event) {
   const element = event.target
   element.classList.add('animate__pulse')
@@ -213,9 +185,69 @@ function pulseAnimation(event) {
   }, 300)
 }
 
-// Mostrar modal si no hay transferencias
-onMounted(() => {
-  if (transferencias.value.length === 0) {
+function determinarTipo(destinationBank) {
+  if (destinationBank.toLowerCase() === 'propio') {
+    return 'propias'
+  } else if (destinationBank.toLowerCase() === 'terceros') {
+    return 'terceros'
+  } else {
+    return 'interbancaria'
+  }
+}
+
+function verDetalle(transferencia) {
+  router.push({
+    path: `/detalle-transferencia/${transferencia.id}`,
+    state: { transferencia }
+  })
+}
+
+async function getAccountNumber(accountId) {
+  try {
+    const response = await fetch(`${accountServiceUrl}/${accountId}`)
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`)
+    }
+    const account = await response.json()
+    return account.accountNumber || 'Desconocido'
+  } catch (error) {
+    console.error(`Error al obtener número de cuenta para ID ${accountId}:`, error)
+    return 'Desconocido'
+  }
+}
+
+onMounted(async () => {
+  console.log('Iniciando carga de transferencias para clientId:', clientId)
+  try {
+    const response = await fetch(`${transferServiceUrl}/client/${clientId}`)
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`)
+    }
+    const data = await response.json()
+    console.log('Transferencias crudas del backend:', data)
+
+    transferencias.value = await Promise.all(data.map(async t => {
+      const originAccountNumber = await getAccountNumber(t.originAccountId)
+      return {
+        id: t.id,
+        origen: originAccountNumber,
+        destino: t.destinationAccountNumber || 'Desconocido',
+        banco: t.destinationBank || 'Desconocido',
+        monto: t.amount || 0,
+        fecha: t.transferDate || new Date().toISOString(),
+        estado: t.status || 'pendiente',
+        tipo: determinarTipo(t.destinationBank || 'interbancaria')
+      }
+    }))
+    console.log('Transferencias mapeadas:', transferencias.value)
+
+    if (transferencias.value.length === 0) {
+      console.log('No se encontraron transferencias')
+      const modal = new bootstrap.Modal(document.getElementById('noTransferenciasModal'))
+      modal.show()
+    }
+  } catch (error) {
+    console.error('Error al cargar transferencias:', error)
     const modal = new bootstrap.Modal(document.getElementById('noTransferenciasModal'))
     modal.show()
   }
