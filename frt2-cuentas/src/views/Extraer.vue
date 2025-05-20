@@ -1,6 +1,9 @@
 <template>
-  <div class="extraer-dinero">
-    <section class="hero">
+  <div class="extraer-dinero-app">
+    <button @click="volver" class="back-button animate__animated animate__fadeIn">
+      <i class="bi bi-arrow-left"></i> Volver
+    </button>
+    <section class="hero animate__animated animate__fadeIn">
       <h1 class="titulo">Extraer Dinero</h1>
       <p class="descripcion">
         Busca una cuenta, revisa su saldo y realiza una extracción
@@ -8,48 +11,55 @@
     </section>
 
     <!-- Buscador de cuentas -->
-    <section class="filtros">
+    <section class="filtros animate__animated animate__fadeIn" style="animation-delay: 0.1s">
       <div class="filtros-container">
-        <input
-          type="text"
-          v-model="busqueda"
-          class="input-filtro"
-          placeholder="Buscar por número de cuenta, nombre o ID de cliente..."
-        />
+        <div class="input-group">
+          <span class="input-group-text"><i class="bi bi-search"></i></span>
+          <input
+            type="text"
+            v-model="busqueda"
+            class="form-control"
+            placeholder="Buscar por número de cuenta, nombre o ID de cliente..."
+          />
+        </div>
       </div>
     </section>
 
     <!-- Mensaje de carga o error -->
-    <div v-if="loading" class="cargando">Cargando cuentas...</div>
-    <div v-if="error" class="error">{{ error }}</div>
+    <div v-if="loading" class="cargando animate__animated animate__fadeIn">Cargando cuentas...</div>
+    <div v-if="error" class="error animate__animated animate__fadeIn">{{ error }}</div>
 
     <!-- Lista de cuentas filtradas -->
     <section class="lista-cuentas" v-else>
       <div v-if="cuentasFiltradas.length">
         <div 
-          class="item-cuenta"
-          v-for="cuenta in cuentasFiltradas"
+          class="card-accion animate__animated animate__fadeInUp"
+          v-for="(cuenta, index) in cuentasFiltradas"
           :key="cuenta.id"
+          :style="`animation-delay: ${index * 0.1}s`"
           @click="seleccionarCuenta(cuenta)"
+          :class="{ 'selected-origin': cuentaSeleccionada?.id === cuenta.id }"
         >
-          <div class="info-cuenta">
-            <h3>{{ cuenta.clientName || 'Desconocido' }}</h3>
-            <p class="numero-cuenta">{{ cuenta.accountNumber }}</p>
-            <p class="id-cliente">ID Cliente: {{ cuenta.clientId }}</p>
+          <div class="icono-wrapper">
+            <div class="icono account-icon-savings">
+              <i class="bi bi-bank"></i>
+            </div>
+            <div class="glow glow-green"></div>
           </div>
-          <div class="saldo-cuenta">
-            <span class="badge-saldo">${{ cuenta.balance.toFixed(2) }}</span>
-          </div>
+          <h3>{{ cuenta.clientName || 'Desconocido' }}</h3>
+          <p class="descripcion-card">{{ cuenta.accountNumber }}</p>
+          <p class="saldo-cuenta">Saldo: ${{ cuenta.balance.toFixed(2) }}</p>
+          <small>ID Cliente: {{ cuenta.clientId }}</small>
         </div>
       </div>
 
-      <div v-else class="sin-resultados">
+      <div v-else class="sin-resultados animate__animated animate__fadeIn">
         No se encontraron cuentas.
       </div>
     </section>
 
     <!-- Formulario de extracción -->
-    <section v-if="cuentaSeleccionada" class="formulario-extraccion">
+    <section v-if="cuentaSeleccionada" class="form-section animate__animated animate__fadeIn" style="animation-delay: 0.2s">
       <div class="formulario-container">
         <h2 class="subtitulo">Cuenta seleccionada: {{ cuentaSeleccionada.accountNumber }}</h2>
         
@@ -58,31 +68,40 @@
           <p><strong>Saldo actual:</strong> ${{ cuentaSeleccionada.balance.toFixed(2) }}</p>
         </div>
 
-        <form @submit.prevent="extraerDinero" class="form-extraccion">
-          <div class="form-grupo">
-            <label>Monto a Extraer</label>
-            <input
-              type="number"
-              v-model.number="form.amount"
-              class="input-field"
-              placeholder="Ej. 100.00"
-              step="0.01"
-              min="0"
-              :max="cuentaSeleccionada.balance"
-              required
-            />
+        <form @submit.prevent="extraerDinero" class="transfer-form">
+          <div class="form-group">
+            <label class="form-label">
+              <i class="bi bi-cash-coin"></i> Monto a Extraer
+            </label>
+            <div class="input-group">
+              <span class="input-group-text">$</span>
+              <input
+                type="number"
+                v-model.number="form.amount"
+                class="form-control"
+                placeholder="Ej. 100.00"
+                step="0.01"
+                min="0"
+                :max="cuentaSeleccionada.balance"
+                required
+              />
+            </div>
             <div class="saldo-disponible">
               Máximo disponible: ${{ cuentaSeleccionada.balance.toFixed(2) }}
             </div>
           </div>
 
-          <div class="botones-form">
-            <button type="submit" class="btn-accion" :disabled="loading">
+          <div class="buttons-group">
+            <button 
+              type="submit" 
+              class="btn-accion" 
+              :disabled="loading"
+            >
               <i class="bi bi-cash-stack"></i> {{ loading ? 'Procesando...' : 'Confirmar Extracción' }}
             </button>
             <button
               @click.prevent="exportarPDF"
-              class="btn-accion btn-secundario"
+              class="btn-comprobante"
               :disabled="loading"
             >
               <i class="bi bi-file-earmark-pdf"></i> Exportar en PDF
@@ -96,7 +115,7 @@
       </div>
     </section>
 
-    <footer class="footer">
+    <footer class="footer animate__animated animate__fadeIn" style="animation-delay: 0.3s">
       © 2025 Gestión Premium. Todos los derechos reservados.
     </footer>
   </div>
@@ -104,8 +123,14 @@
 
 <script setup>
 import { ref, computed, onMounted } from 'vue';
+import jsPDF from 'jspdf';
+import { useRouter } from 'vue-router';
+import 'animate.css';
+import * as bootstrap from 'bootstrap';
 
+const router = useRouter();
 const cuentas = ref([]);
+const clientes = ref([]);
 const cuentaSeleccionada = ref(null);
 const busqueda = ref('');
 const form = ref({ amount: '' });
@@ -114,10 +139,18 @@ const mensajeError = ref(false);
 const loading = ref(false);
 const error = ref(null);
 
-onMounted(() => {
-  fetchCuentas();
-});
+// Obtener lista de clientes
+const fetchClientes = async () => {
+  try {
+    const response = await fetch('http://localhost:8081/api/clients');
+    if (!response.ok) throw new Error('Error al obtener clientes');
+    clientes.value = await response.json();
+  } catch (err) {
+    console.error('Error al cargar clientes:', err);
+  }
+};
 
+// Obtener cuentas y asociar nombres de clientes
 const fetchCuentas = async () => {
   try {
     loading.value = true;
@@ -129,17 +162,29 @@ const fetchCuentas = async () => {
       },
     });
 
-    if (!response.ok) {
-      throw new Error(`Error ${response.status}`);
-    }
+    if (!response.ok) throw new Error(`Error ${response.status}`);
 
-    cuentas.value = await response.json();
+    const cuentasData = await response.json();
+
+    // Asignar nombre del cliente a cada cuenta
+    cuentas.value = cuentasData.map((cuenta) => {
+      const cliente = clientes.value.find((c) => c.id === cuenta.clientId);
+      return {
+        ...cuenta,
+        clientName: cliente ? cliente.fullName : null,
+      };
+    });
   } catch (err) {
     error.value = 'Error al cargar las cuentas: ' + err.message;
   } finally {
     loading.value = false;
   }
 };
+
+onMounted(async () => {
+  await fetchClientes();
+  await fetchCuentas();
+});
 
 const cuentasFiltradas = computed(() => {
   if (!busqueda.value.trim()) return cuentas.value;
@@ -193,10 +238,17 @@ const extraerDinero = async () => {
     const updatedCuenta = await response.json();
     const index = cuentas.value.findIndex((c) => c.id === cuentaSeleccionada.value.id);
     if (index !== -1) {
-      cuentas.value[index] = updatedCuenta;
+      cuentas.value[index] = {
+        ...updatedCuenta,
+        clientName: cuentaSeleccionada.value.clientName, // mantener el nombre
+      };
     }
 
-    cuentaSeleccionada.value = updatedCuenta;
+    cuentaSeleccionada.value = {
+      ...updatedCuenta,
+      clientName: cuentaSeleccionada.value.clientName,
+    };
+
     mensaje.value = `Extracción de $${monto.toFixed(2)} realizada con éxito. Saldo restante: $${updatedCuenta.balance.toFixed(2)}.`;
     mensajeError.value = false;
     form.value.amount = '';
@@ -218,47 +270,101 @@ const exportarPDF = () => {
     return;
   }
 
-  const pdfContent = `
-    Comprobante de Extracción
-    ----------------------
-    Cliente: ${cuentaSeleccionada.value.clientName || 'Desconocido'}
-    Número de Cuenta: ${cuentaSeleccionada.value.accountNumber}
-    Saldo Actual: $${cuentaSeleccionada.value.balance.toFixed(2)}
-    Fecha: ${new Date().toLocaleString()}
-  `;
-  console.log('Simulación de PDF:', pdfContent);
-  mensaje.value = 'PDF generado con la información de extracción (simulado).';
+  const doc = new jsPDF();
+  const date = new Date().toLocaleString();
+
+  doc.setFontSize(16);
+  doc.text('Comprobante de Extracción', 20, 20);
+
+  doc.setFontSize(12);
+  doc.text(`Cliente: ${cuentaSeleccionada.value.clientName || 'Desconocido'}`, 20, 40);
+  doc.text(`Número de Cuenta: ${cuentaSeleccionada.value.accountNumber}`, 20, 50);
+  doc.text(`Saldo Actual: $${cuentaSeleccionada.value.balance.toFixed(2)}`, 20, 60);
+  doc.text(`Fecha: ${date}`, 20, 70);
+
+  doc.save('comprobante_extraccion.pdf');
+  mensaje.value = 'PDF generado con la información de extracción.';
   mensajeError.value = false;
 };
+
+const volver = () => router.push('/');
 </script>
 
 <style scoped>
-.extraer-dinero {
-  font-family: 'Segoe UI', sans-serif;
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
+
+.extraer-dinero-app {
+  font-family: 'Poppins', sans-serif;
   color: #fff;
-  background: linear-gradient(to bottom, #122523, #000);
+  background: linear-gradient(135deg, #0f2027, #203a43, #2c5364);
   min-height: 100vh;
   display: flex;
   flex-direction: column;
   align-items: center;
   padding: 20px;
+  position: relative;
+}
+
+.back-button {
+  position: absolute;
+  top: 20px;
+  left: 20px;
+  background: rgba(255, 255, 255, 0.1);
+  border: none;
+  color: #fff;
+  padding: 8px 15px;
+  border-radius: 20px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  transition: all 0.3s;
+  backdrop-filter: blur(5px);
+  z-index: 10;
+}
+
+.back-button:hover {
+  background: rgba(255, 255, 255, 0.2);
+  transform: translateX(-3px);
 }
 
 .hero {
   padding: 60px 20px 40px;
   text-align: center;
+  position: relative;
+  width: 100%;
+  max-width: 1000px;
+}
+
+.hero::after {
+  content: '';
+  position: absolute;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 100px;
+  height: 3px;
+  background: linear-gradient(90deg, transparent, #3ded97, transparent);
 }
 
 .titulo {
   font-size: 2.5rem;
   font-weight: 800;
-  color: #3ded97;
+  background: linear-gradient(to right, #3ded97, #2fa8f8);
+  -webkit-background-clip: text;
+  background-clip: text; 
+  -webkit-text-fill-color: transparent;
   margin-bottom: 15px;
+  text-shadow: 0 0 20px rgba(61, 237, 151, 0.3);
+  letter-spacing: 1px;
 }
 
 .descripcion {
   font-size: 1.2rem;
-  color: #ccc;
+  color: #a0a8c0;
+  max-width: 600px;
+  margin: 0 auto;
+  line-height: 1.6;
 }
 
 .filtros {
@@ -268,102 +374,217 @@ const exportarPDF = () => {
 }
 
 .filtros-container {
-  background: rgba(0, 0, 0, 0.7);
-  padding: 20px;
-  border-radius: 15px;
-  box-shadow: 0 0 20px rgba(61, 237, 151, 0.1);
+  background: rgba(15, 23, 42, 0.5);
+  backdrop-filter: blur(10px);
+  border-radius: 20px;
+  padding: 25px;
+  border: 1px solid rgba(61, 237, 151, 0.1);
 }
 
-.input-filtro {
-  width: 100%;
-  padding: 12px 15px;
-  border: 1px solid #3ded97;
-  border-radius: 8px;
-  background-color: rgba(0, 0, 0, 0.5);
+.input-group {
+  display: flex;
+  align-items: center;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+.input-group-text {
+  padding: 0 15px;
+  background: rgba(255, 255, 255, 0.2);
+  color: #fff;
+  height: 45px;
+  display: flex;
+  align-items: center;
+}
+
+.form-control {
+  flex: 1;
+  height: 45px;
+  padding: 0 15px;
+  background: transparent;
+  border: none;
   color: #fff;
   font-size: 1rem;
+}
+
+.form-control:focus {
+  outline: none;
+  box-shadow: 0 0 0 2px rgba(61, 237, 151, 0.3);
 }
 
 .lista-cuentas {
   width: 100%;
   max-width: 1000px;
   margin-bottom: 30px;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 15px;
 }
 
-.item-cuenta {
-  background: rgba(0, 0, 0, 0.7);
-  padding: 20px;
+.card-accion {
+  background: rgba(15, 23, 42, 0.7);
+  backdrop-filter: blur(5px);
   border-radius: 15px;
-  margin-bottom: 15px;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
+  padding: 20px;
   cursor: pointer;
-  transition: all 0.3s ease;
-  border: 1px solid transparent;
+  transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  border: 1px solid rgba(61, 237, 151, 0.1);
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
 }
 
-.item-cuenta:hover {
-  border-color: #3ded97;
-  box-shadow: 0 0 15px rgba(61, 237, 151, 0.2);
+.card-accion::before {
+  content: '';
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: radial-gradient(circle, rgba(61, 237, 151, 0.1) 0%, transparent 70%);
+  opacity: 0;
+  transition: opacity 0.4s;
 }
 
-.info-cuenta h3 {
-  color: #3ded97;
+.card-accion:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 10px 20px rgba(61, 237, 151, 0.15);
+  border-color: rgba(61, 237, 151, 0.3);
+}
+
+.card-accion:hover::before {
+  opacity: 0.5;
+}
+
+.selected-origin {
+  border: 2px solid #3ded97 !important;
+  background: rgba(61, 237, 151, 0.1) !important;
+  box-shadow: 0 0 15px rgba(61, 237, 151, 0.2) !important;
+}
+
+.icono-wrapper {
+  position: relative;
+  width: 60px;
+  height: 60px;
+  margin: 0 auto 15px;
+}
+
+.icono {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.5rem;
+  position: relative;
+  z-index: 2;
+  transition: all 0.3s;
+}
+
+.icono i {
+  color: white;
+}
+
+.account-icon-savings {
+  background: linear-gradient(135deg, #3ded97, #2a9d8f);
+}
+
+.glow {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  opacity: 0.7;
+  filter: blur(15px);
+  transition: all 0.3s;
+}
+
+.glow-green { background-color: #3ded97; }
+
+.card-accion h3 {
+  font-size: 1.1rem;
+  font-weight: 600;
   margin-bottom: 5px;
-}
-
-.numero-cuenta {
   color: #fff;
-  font-weight: 600;
+}
+
+.descripcion-card {
+  font-size: 0.9rem;
+  color: #a0a8c0;
   margin-bottom: 5px;
 }
 
-.id-cliente {
-  color: #ccc;
-  font-size: 0.9rem;
+.saldo-cuenta {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #3ded97;
+  margin: 10px 0;
 }
 
-.badge-saldo {
-  background-color: rgba(40, 167, 69, 0.2);
-  color: #28a745;
-  padding: 8px 15px;
-  border-radius: 20px;
-  font-weight: 600;
+.card-accion small {
+  font-size: 0.8rem;
+  color: #6b7280;
 }
 
 .sin-resultados {
   text-align: center;
   padding: 30px;
-  color: #ccc;
+  color: #a0a8c0;
   font-size: 1.1rem;
+  grid-column: 1 / -1;
 }
 
 .cargando {
   text-align: center;
   padding: 30px;
-  color: #ccc;
+  color: #a0a8c0;
   font-size: 1.1rem;
 }
 
 .error {
   text-align: center;
   padding: 30px;
-  color: #ff4d4d;
+  color: #ff6b6b;
   font-size: 1.1rem;
 }
 
-.formulario-extraccion {
+.form-section {
+  background: rgba(15, 23, 42, 0.5);
+  backdrop-filter: blur(10px);
+  border-radius: 20px;
+  padding: 30px;
+  border: 1px solid rgba(61, 237, 151, 0.1);
   width: 100%;
   max-width: 600px;
-  margin-bottom: 30px;
+  margin: 0 auto;
 }
 
-.formulario-container {
-  background: rgba(0, 0, 0, 0.7);
-  padding: 30px;
-  border-radius: 15px;
-  box-shadow: 0 0 20px rgba(61, 237, 151, 0.1);
+.transfer-form {
+  display: flex;
+  flex-direction: column;
+  gap: 25px;
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.form-label {
+  font-size: 1.2rem;
+  color: #fff;
+  display: flex;
+  align-items: center;
+  font-weight: bold;
+  gap: 10px;
 }
 
 .subtitulo {
@@ -375,6 +596,10 @@ const exportarPDF = () => {
 
 .info-cliente {
   margin-bottom: 30px;
+  background: rgba(15, 23, 42, 0.3);
+  padding: 20px;
+  border-radius: 10px;
+  border: 1px solid rgba(61, 237, 151, 0.1);
 }
 
 .info-cliente p {
@@ -386,66 +611,55 @@ const exportarPDF = () => {
   color: #3ded97;
 }
 
-.form-extraccion {
+.saldo-disponible {
+  font-size: 0.9rem;
+  color: #a0a8c0;
+  margin-top: 5px;
+}
+
+.buttons-group {
   display: flex;
-  flex-direction: column;
-  gap: 20px;
-}
-
-.form-grupo {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.form-grupo label {
-  color: #3ded97;
-  font-weight: 600;
-}
-
-.input-field {
-  padding: 12px 15px;
-  border: 1px solid #3ded97;
-  border-radius: 8px;
-  background-color: rgba(0, 0, 0, 0.5);
-  color: #fff;
-  font-size: 1rem;
-  width: 100%;
-}
-
-.botones-form {
-  display: flex;
+  gap: 15px;
   justify-content: center;
-  gap: 20px;
-  margin-top: 20px;
 }
 
-.btn-accion {
-  background-color: #3ded97;
-  color: #fff;
+.btn-accion, .btn-comprobante {
   padding: 12px 25px;
-  font-size: 1rem;
   border: none;
-  border-radius: 30px;
+  border-radius: 50px;
+  font-weight: 600;
   cursor: pointer;
-  box-shadow: 0 0 10px #3ded97;
-  transition: 0.3s;
+  transition: all 0.3s;
   display: flex;
   align-items: center;
   gap: 8px;
 }
 
+.btn-accion {
+  background: linear-gradient(135deg, #3ded97, #2a9d8f);
+  color: #fff;
+}
+
 .btn-accion:hover {
-  background-color: #24d26a;
+  transform: translateY(-3px);
+  box-shadow: 0 5px 15px rgba(61, 237, 151, 0.4);
 }
 
-.btn-secundario {
-  background-color: #6c757d;
-  box-shadow: 0 0 10px #6c757d;
+.btn-accion:disabled {
+  background: #6b7280;
+  cursor: not-allowed;
+  transform: none !important;
+  box-shadow: none !important;
 }
 
-.btn-secundario:hover {
-  background-color: #5a6268;
+.btn-comprobante {
+  background: linear-gradient(135deg, #4361ee, #3a0ca3);
+  color: #fff;
+}
+
+.btn-comprobante:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 5px 15px rgba(67, 97, 238, 0.4);
 }
 
 .mensaje {
@@ -468,26 +682,64 @@ const exportarPDF = () => {
 }
 
 .footer {
-  margin-top: auto;
-  padding: 30px 0;
+  margin-top: 50px;
+  padding: 20px 0;
   font-size: 0.9rem;
-  color: #888;
+  color: #6b7280;
   text-align: center;
+  position: relative;
+  width: 100%;
+}
+
+.footer::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 200px;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(61, 237, 151, 0.5), transparent);
+}
+
+@media (max-width: 992px) {
+  .lista-cuentas {
+    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+  }
 }
 
 @media (max-width: 768px) {
-  .botones-form {
+  .buttons-group {
     flex-direction: column;
   }
   
-  .item-cuenta {
-    flex-direction: column;
-    text-align: center;
-    gap: 15px;
+  .hero {
+    padding: 40px 20px 30px;
   }
   
-  .info-cuenta, .saldo-cuenta {
-    width: 100%;
+  .titulo {
+    font-size: 2rem;
+  }
+  
+  .descripcion {
+    font-size: 1rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .back-button {
+    top: 10px;
+    left: 10px;
+    padding: 5px 10px;
+    font-size: 0.9rem;
+  }
+  
+  .form-section, .filtros-container {
+    padding: 20px 15px;
+  }
+  
+  .card-accion {
+    padding: 15px;
   }
 }
 </style>
