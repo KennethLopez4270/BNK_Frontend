@@ -1,6 +1,6 @@
 <template>
   <div class="gestor-cuentas">
-    <section class="hero">
+    <section class="hero animate__animated animate__fadeIn">
       <h1 class="titulo">Gestión de Cuentas</h1>
       <p class="descripcion">
         Administra las cuentas de tus clientes de forma rápida y sencilla
@@ -9,22 +9,29 @@
 
     <section class="botones-grid">
       <div 
-        v-for="boton in botones" 
+        v-for="(boton, index) in botones" 
         :key="boton.label" 
-        class="card-accion"
+        class="card-accion animate__animated animate__fadeInUp"
+        :style="`animation-delay: ${index * 0.1}s`"
         @click="boton.action"
+        @mouseenter="hoverCard(index)"
+        @mouseleave="hoverCard(null)"
       >
-        <div class="icono" :class="`bg-${boton.color}`">
-          <i :class="`bi ${boton.icon}`"></i>
+        <div class="icono-wrapper">
+          <div class="icono" :class="`bg-${boton.color}`">
+            <i :class="`bi ${boton.icon}`"></i>
+          </div>
+          <div class="glow" :class="`glow-${boton.color}`"></div>
         </div>
         <h3>{{ boton.label }}</h3>
+        <p class="descripcion-card">{{ boton.descripcion }}</p>
         <button class="btn-accion">
-          Ir
+          <i class="bi bi-arrow-right"></i>
         </button>
       </div>
     </section>
 
-    <footer class="footer">
+    <footer class="footer animate__animated animate__fadeIn">
       © 2025 Gestión Premium. Todos los derechos reservados.
     </footer>
   </div>
@@ -32,6 +39,7 @@
 
 <script setup>
 import { useRouter } from 'vue-router'
+import 'animate.css'
 
 const router = useRouter()
 
@@ -43,129 +51,346 @@ const irADepositar = () => router.push('/depositar')
 const irAExtraer = () => router.push('/extraer')
 
 const botones = [
-  { label: 'Crear Cuenta', icon: 'bi-plus-circle', color: 'primary', action: irACrear },
-  { label: 'Eliminar Cuenta', icon: 'bi-trash', color: 'danger', action: irAEliminar },
-  { label: 'Actualizar Cuenta', icon: 'bi-pencil-square', color: 'warning', action: irAActualizar },
-  { label: 'Obtener Cuentas', icon: 'bi-list-check', color: 'success', action: irAObtener },
-  { label: 'Depositar', icon: 'bi-box-arrow-in-down', color: 'info', action: irADepositar },
-  { label: 'Extraer', icon: 'bi-box-arrow-up', color: 'secondary', action: irAExtraer }
+  { 
+    label: 'Crear Cuenta', 
+    icon: 'bi-plus-circle', 
+    color: 'blue', 
+    action: irACrear,
+    descripcion: 'Abre nuevas cuentas para clientes'
+  },
+  { 
+    label: 'Eliminar Cuenta', 
+    icon: 'bi-trash', 
+    color: 'pink', 
+    action: irAEliminar,
+    descripcion: 'Cierra cuentas existentes'
+  },
+  { 
+    label: 'Actualizar Cuenta', 
+    icon: 'bi-pencil-square', 
+    color: 'purple', 
+    action: irAActualizar,
+    descripcion: 'Modifica información de cuentas'
+  },
+  { 
+    label: 'Obtener Cuentas', 
+    icon: 'bi-list-check', 
+    color: 'green', 
+    action: irAObtener,
+    descripcion: 'Consulta el listado de cuentas'
+  },
+  { 
+    label: 'Depositar', 
+    icon: 'bi-box-arrow-in-down', 
+    color: 'blue', 
+    action: irADepositar,
+    descripcion: 'Ingresa fondos a una cuenta'
+  },
+  { 
+    label: 'Extraer', 
+    icon: 'bi-box-arrow-up', 
+    color: 'pink', 
+    action: irAExtraer,
+    descripcion: 'Retira fondos de una cuenta'
+  }
 ]
+
+const hoverCard = (index) => {
+  // Efecto adicional al hacer hover
+}
 </script>
 
 <style scoped>
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
+
 .gestor-cuentas {
-  font-family: 'Segoe UI', sans-serif;
+  font-family: 'Poppins', sans-serif;
   color: #fff;
-  background: linear-gradient(to bottom, #122523, #000);
+  background: linear-gradient(135deg, #0f2027, #203a43, #2c5364);
   min-height: 100vh;
   display: flex;
   flex-direction: column;
   align-items: center;
   padding: 20px;
+  overflow-x: hidden;
 }
 
 .hero {
-  padding: 60px 20px 40px;
+  padding: 80px 20px 50px;
   text-align: center;
+  position: relative;
+}
+
+.hero::after {
+  content: '';
+  position: absolute;
+  bottom: 30px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 100px;
+  height: 3px;
+  background: linear-gradient(90deg, transparent, #3ded97, transparent);
 }
 
 .titulo {
   font-size: 2.5rem;
   font-weight: 800;
-  color: #3ded97;
+  background: linear-gradient(to right, #3ded97, #2fa8f8);
+  -webkit-background-clip: text;
+  background-clip: text; 
+  -webkit-text-fill-color: transparent;
   margin-bottom: 15px;
+  text-shadow: 0 0 20px rgba(61, 237, 151, 0.3);
+  letter-spacing: 1px;
 }
 
 .descripcion {
-  font-size: 1.2rem;
-  color: #ccc;
+  font-size: 1.3rem;
+  color: #a0a8c0;
+  max-width: 600px;
+  margin: 0 auto;
+  line-height: 1.6;
 }
 
 .botones-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-  gap: 25px;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 30px;
   width: 100%;
-  max-width: 1000px;
-  padding: 40px 20px;
+  max-width: 1100px;
+  padding: 50px 20px;
+  position: relative;
+  z-index: 1;
 }
 
 .card-accion {
-  background: rgba(0, 0, 0, 0.7);
-  border-radius: 15px;
-  padding: 30px 20px;
+  background: rgba(15, 23, 42, 0.7);
+  backdrop-filter: blur(10px);
+  border-radius: 20px;
+  padding: 35px 25px;
   text-align: center;
   cursor: pointer;
-  transition: transform 0.3s, box-shadow 0.3s;
+  transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
   border: 1px solid rgba(61, 237, 151, 0.1);
+  position: relative;
+  overflow: hidden;
+}
+
+.card-accion::before {
+  content: '';
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: radial-gradient(circle, rgba(61, 237, 151, 0.1) 0%, transparent 70%);
+  opacity: 0;
+  transition: opacity 0.4s;
 }
 
 .card-accion:hover {
-  transform: translateY(-5px);
-  box-shadow: 0 10px 20px rgba(61, 237, 151, 0.1);
+  transform: translateY(-10px) scale(1.03);
+  box-shadow: 0 15px 30px rgba(61, 237, 151, 0.15);
+  border-color: rgba(61, 237, 151, 0.3);
+}
+
+.card-accion:hover::before {
+  opacity: 1;
 }
 
 .card-accion h3 {
-  margin: 20px 0;
+  margin: 25px 0 15px;
   color: #fff;
-  font-size: 1.2rem;
+  font-size: 1.3rem;
+  font-weight: 600;
+  position: relative;
+  display: inline-block;
+}
+
+.card-accion h3::after {
+  content: '';
+  position: absolute;
+  bottom: -5px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 30px;
+  height: 2px;
+  background: currentColor;
+  opacity: 0.5;
+  transition: all 0.3s;
+}
+
+.card-accion:hover h3::after {
+  width: 50px;
+  opacity: 1;
+}
+
+.descripcion-card {
+  color: #a0a8c0;
+  font-size: 0.95rem;
+  margin-bottom: 25px;
+  min-height: 40px;
+  line-height: 1.6;
+  transition: color 0.3s;
+}
+
+.card-accion:hover .descripcion-card {
+  color: #d1d9f0;
+}
+
+.icono-wrapper {
+  position: relative;
+  width: 80px;
+  height: 80px;
+  margin: 0 auto;
 }
 
 .icono {
-  width: 70px;
-  height: 70px;
-  margin: 0 auto;
+  width: 100%;
+  height: 100%;
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 1.8rem;
+  font-size: 2rem;
+  position: relative;
+  z-index: 2;
+  transition: all 0.4s;
 }
 
 .icono i {
   color: white;
 }
 
-.bg-primary { background-color: #24d26a; box-shadow: 0 0 15px #24d26a; }
-.bg-danger { background-color: #ff4d4d; box-shadow: 0 0 15px #ff4d4d; }
-.bg-warning { background-color: #ffc107; box-shadow: 0 0 15px #ffc107; }
-.bg-success { background-color: #28a745; box-shadow: 0 0 15px #28a745; }
-.bg-info { background-color: #17a2b8; box-shadow: 0 0 15px #17a2b8; }
-.bg-secondary { background-color: #6c757d; box-shadow: 0 0 15px #6c757d; }
+.glow {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  opacity: 0.7;
+  filter: blur(15px);
+  transition: all 0.4s;
+}
+
+.glow-blue { background-color: #4361ee; }
+.glow-purple { background-color: #7b2cbf; }
+.glow-pink { background-color: #f72585; }
+.glow-green { background-color: #4cc9f0; }
+
+.bg-blue { background-color: #4361ee; }
+.bg-purple { background-color: #7b2cbf; }
+.bg-pink { background-color: #f72585; }
+.bg-green { background-color: #4cc9f0; }
+
+.card-accion:hover .icono {
+  transform: scale(1.1) rotate(5deg);
+}
+
+.card-accion:hover .glow {
+  transform: scale(1.2);
+  opacity: 0.9;
+}
 
 .btn-accion {
-  background-color: #24d26a;
+  background: linear-gradient(135deg, #3ded97, #2fa8f8);
   color: #fff;
-  padding: 10px 25px;
-  font-size: 1rem;
+  width: 45px;
+  height: 45px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto;
   border: none;
-  border-radius: 30px;
+  border-radius: 50%;
   cursor: pointer;
-  box-shadow: 0 0 10px #24d26a;
-  transition: 0.3s;
+  box-shadow: 0 0 15px rgba(61, 237, 151, 0.5);
+  transition: all 0.3s;
+  position: relative;
+  overflow: hidden;
+}
+
+.btn-accion::before {
+  content: '';
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: linear-gradient(
+    to bottom right,
+    transparent,
+    transparent,
+    transparent,
+    rgba(255, 255, 255, 0.3),
+    transparent
+  );
+  transform: rotate(30deg);
 }
 
 .btn-accion:hover {
-  background-color: #1abc5c;
+  transform: scale(1.1);
+  box-shadow: 0 0 25px rgba(61, 237, 151, 0.8);
+}
+
+.btn-accion:hover::before {
+  animation: shine 1.5s infinite;
+}
+
+@keyframes shine {
+  100% {
+    transform: translateX(100%) rotate(30deg);
+  }
 }
 
 .footer {
   margin-top: auto;
-  padding: 30px 0;
+  padding: 40px 0 30px;
   font-size: 0.9rem;
-  color: #888;
+  color: #6b7280;
   text-align: center;
+  position: relative;
+}
+
+.footer::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 200px;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(61, 237, 151, 0.5), transparent);
 }
 
 @media (max-width: 768px) {
   .botones-grid {
     grid-template-columns: 1fr 1fr;
+    gap: 20px;
+  }
+  
+  .titulo {
+    font-size: 2.2rem;
   }
 }
 
 @media (max-width: 480px) {
   .botones-grid {
     grid-template-columns: 1fr;
+    max-width: 350px;
+  }
+  
+  .titulo {
+    font-size: 1.8rem;
+  }
+  
+  .descripcion {
+    font-size: 1.1rem;
+  }
+  
+  .card-accion {
+    padding: 25px 20px;
   }
 }
 </style>

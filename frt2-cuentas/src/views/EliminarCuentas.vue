@@ -1,6 +1,10 @@
 <template>
   <div class="eliminar-cuenta">
-    <section class="hero">
+    <button @click="volver" class="back-button animate__animated animate__fadeIn">
+      <i class="bi bi-arrow-left"></i> Volver
+    </button>
+    
+    <section class="hero animate__animated animate__fadeIn">
       <h1 class="titulo">Eliminar Cuenta</h1>
       <p class="descripcion">
         Filtra y selecciona una cuenta para eliminar
@@ -8,67 +12,102 @@
     </section>
 
     <!-- Filtros -->
-    <section class="filtros">
+    <section class="filtros animate__animated animate__fadeIn" style="animation-delay: 0.1s">
       <div class="filtros-container">
         <div class="filtros-grid">
-          <input
-            v-model="filtros.accountNumber"
-            type="text"
-            class="input-filtro"
-            placeholder="N° de cuenta"
-          />
-          <input
-            v-model="filtros.clientId"
-            type="text"
-            class="input-filtro"
-            placeholder="ID de cliente"
-          />
-          <select v-model="filtros.accountType" class="select-filtro">
-            <option value="">Tipo de cuenta</option>
-            <option value="ahorro">Ahorro</option>
-            <option value="corriente">Corriente</option>
-          </select>
-          <select v-model="filtros.status" class="select-filtro">
-            <option value="">Estado</option>
-            <option value="activo">Activo</option>
-            <option value="inactivo">Inactivo</option>
-          </select>
+          <div class="input-group animate__animated animate__fadeIn" style="animation-delay: 0.2s">
+            <span class="input-group-text"><i class="bi bi-credit-card"></i></span>
+            <input
+              v-model="filtros.accountNumber"
+              type="text"
+              class="form-control"
+              placeholder="N° de cuenta"
+            />
+          </div>
+          
+          <div class="input-group animate__animated animate__fadeIn" style="animation-delay: 0.3s">
+            <span class="input-group-text"><i class="bi bi-person-badge"></i></span>
+            <input
+              v-model="filtros.clientId"
+              type="text"
+              class="form-control"
+              placeholder="ID de cliente"
+            />
+          </div>
+          
+          <div class="input-group animate__animated animate__fadeIn" style="animation-delay: 0.4s">
+            <span class="input-group-text"><i class="bi bi-wallet2"></i></span>
+            <select v-model="filtros.accountType" class="form-control">
+              <option value="">Tipo de cuenta</option>
+              <option value="ahorro">Ahorro</option>
+              <option value="corriente">Corriente</option>
+            </select>
+          </div>
+          
+          <div class="input-group animate__animated animate__fadeIn" style="animation-delay: 0.5s">
+            <span class="input-group-text"><i class="bi bi-power"></i></span>
+            <select v-model="filtros.status" class="form-control">
+              <option value="">Estado</option>
+              <option value="activo">Activo</option>
+              <option value="inactivo">Inactivo</option>
+            </select>
+          </div>
         </div>
       </div>
     </section>
 
     <!-- Mensaje de carga o error -->
-    <div v-if="loading" class="cargando">Cargando cuentas...</div>
-    <div v-if="error" class="error">{{ error }}</div>
+    <div v-if="loading" class="cargando animate__animated animate__fadeIn">
+      <div class="spinner"></div>
+      Cargando cuentas...
+    </div>
+    <div v-if="error" class="error animate__animated animate__shakeX">
+      <i class="bi bi-exclamation-triangle"></i> {{ error }}
+    </div>
 
     <!-- Tabla -->
-    <section class="tabla-container" v-else>
+    <section class="tabla-container animate__animated animate__fadeIn" style="animation-delay: 0.6s" v-else>
       <div v-if="cuentasFiltradas.length" class="tabla-scroll">
         <table class="tabla-cuentas">
           <thead>
             <tr>
-              <th>N° Cuenta</th>
-              <th>ID Cliente</th>
-              <th>Tipo</th>
-              <th>Saldo</th>
-              <th>Estado</th>
+              <th @click="ordenarPor('accountNumber')">
+                <span>N° Cuenta <i class="bi bi-arrow-down-up"></i></span>
+              </th>
+              <th @click="ordenarPor('clientId')">
+                <span>ID Cliente <i class="bi bi-arrow-down-up"></i></span>
+              </th>
+              <th @click="ordenarPor('accountType')">
+                <span>Tipo <i class="bi bi-arrow-down-up"></i></span>
+              </th>
+              <th @click="ordenarPor('balance')">
+                <span>Saldo <i class="bi bi-arrow-down-up"></i></span>
+              </th>
+              <th @click="ordenarPor('status')">
+                <span>Estado <i class="bi bi-arrow-down-up"></i></span>
+              </th>
               <th>Acciones</th>
             </tr>
           </thead>
           <tbody>
-            <tr v-for="cuenta in cuentasFiltradas" :key="cuenta.id">
+            <tr 
+              v-for="cuenta in cuentasFiltradas" 
+              :key="cuenta.id"
+              class="animate__animated animate__fadeIn"
+              :style="`animation-delay: ${0.05 * cuentasFiltradas.indexOf(cuenta)}s`"
+            >
               <td>{{ cuenta.accountNumber }}</td>
               <td>{{ cuenta.clientId }}</td>
-              <td>{{ cuenta.accountType }}</td>
+              <td>{{ cuenta.accountType === 'ahorro' ? 'Ahorro' : 'Corriente' }}</td>
               <td>${{ cuenta.balance.toFixed(2) }}</td>
               <td>
                 <span :class="`estado ${cuenta.status}`">
-                  {{ cuenta.status }}
+                  {{ cuenta.status === 'activo' ? 'Activo' : 'Inactivo' }}
                 </span>
               </td>
               <td class="acciones">
                 <button
-                  class="btn-accion btn-eliminar btn-pequeno"
+                  class="btn-accion btn-eliminar"
                   @click="confirmar(cuenta)"
                   :disabled="loading"
                 >
@@ -80,40 +119,40 @@
         </table>
       </div>
 
-      <div v-else class="sin-resultados">
-        No hay cuentas que coincidan con los filtros.
+      <div v-else class="sin-resultados animate__animated animate__fadeIn">
+        <i class="bi bi-search"></i>
+        <p>No hay cuentas que coincidan con los filtros.</p>
       </div>
     </section>
 
-    <!-- Botón volver -->
-    <div class="boton-volver">
-      <button @click="volver" class="btn-accion btn-secundario" :disabled="loading">
-        <i class="bi bi-arrow-left"></i> Volver
-      </button>
-    </div>
-
-    <!-- Modales (actualizados con el mismo estilo) -->
+    <!-- Modales -->
     <div v-if="mostrarModalConfirmar" class="modal-overlay" @click="mostrarModalConfirmar = false">
-      <div class="modal-contenido modal-advertencia" @click.stop>
+      <div class="modal-contenido modal-advertencia animate__animated animate__zoomIn" @click.stop>
+        <div class="modal-icono-advertencia">
+          <i class="bi bi-exclamation-triangle"></i>
+        </div>
         <h3>¿Eliminar cuenta?</h3>
         <p>
           ¿Deseas eliminar la cuenta <strong>{{ cuentaSeleccionada?.accountNumber }}</strong>?
           Esta acción es irreversible.
         </p>
         <div class="botones-modal">
-          <button @click="mostrarModalConfirmar = false" class="btn-accion btn-cancelar">
+          <button @click="mostrarModalConfirmar = false" class="btn-secundario">
             Cancelar
           </button>
-          <button @click="eliminarCuenta" class="btn-accion btn-eliminar" :disabled="loading">
-            <i class="bi bi-trash"></i> {{ loading ? 'Eliminando...' : 'Eliminar' }}
+          <button @click="eliminarCuenta" class="btn-eliminar" :disabled="loading">
+            <i class="bi bi-trash"></i> {{ loading ? 'Eliminando...' : 'Confirmar' }}
           </button>
         </div>
       </div>
     </div>
 
     <div v-if="mostrarModalExito" class="modal-overlay" @click="mostrarModalExito = false">
-      <div class="modal-contenido modal-exito" @click.stop>
-        <h3>Cuenta eliminada</h3>
+      <div class="modal-contenido modal-exito animate__animated animate__zoomIn" @click.stop>
+        <div class="modal-icono-exito">
+          <i class="bi bi-check-circle"></i>
+        </div>
+        <h3>¡Eliminación exitosa!</h3>
         <p>La cuenta fue eliminada correctamente.</p>
         <button @click="mostrarModalExito = false" class="btn-accion">
           Aceptar
@@ -122,7 +161,10 @@
     </div>
 
     <div v-if="mostrarModalError" class="modal-overlay" @click="mostrarModalError = false">
-      <div class="modal-contenido modal-error" @click.stop>
+      <div class="modal-contenido modal-error animate__animated animate__zoomIn" @click.stop>
+        <div class="modal-icono-error">
+          <i class="bi bi-x-circle"></i>
+        </div>
         <h3>Error</h3>
         <p>{{ errorMessage }}</p>
         <button @click="mostrarModalError = false" class="btn-accion">
@@ -131,7 +173,7 @@
       </div>
     </div>
 
-    <footer class="footer">
+    <footer class="footer animate__animated animate__fadeIn">
       © 2025 Gestión Premium. Todos los derechos reservados.
     </footer>
   </div>
@@ -140,11 +182,13 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
+import 'animate.css';
 
 const router = useRouter();
 
 const cuentas = ref([]);
 const cuentaSeleccionada = ref(null);
+const orden = ref({ campo: 'accountNumber', direccion: 'asc' });
 const filtros = ref({
   accountNumber: '',
   clientId: '',
@@ -185,8 +229,17 @@ const fetchCuentas = async () => {
   }
 };
 
+const ordenarPor = (campo) => {
+  if (orden.value.campo === campo) {
+    orden.value.direccion = orden.value.direccion === 'asc' ? 'desc' : 'asc';
+  } else {
+    orden.value.campo = campo;
+    orden.value.direccion = 'asc';
+  }
+};
+
 const cuentasFiltradas = computed(() => {
-  return cuentas.value.filter((c) => {
+  let resultado = cuentas.value.filter((c) => {
     return (
       (!filtros.value.accountNumber || c.accountNumber.includes(filtros.value.accountNumber)) &&
       (!filtros.value.clientId || c.clientId.toString().includes(filtros.value.clientId)) &&
@@ -194,6 +247,21 @@ const cuentasFiltradas = computed(() => {
       (!filtros.value.status || c.status === filtros.value.status)
     );
   });
+
+  // Ordenar
+  if (orden.value.campo) {
+    resultado.sort((a, b) => {
+      if (a[orden.value.campo] < b[orden.value.campo]) {
+        return orden.value.direccion === 'asc' ? -1 : 1;
+      }
+      if (a[orden.value.campo] > b[orden.value.campo]) {
+        return orden.value.direccion === 'asc' ? 1 : -1;
+      }
+      return 0;
+    });
+  }
+
+  return resultado;
 });
 
 const confirmar = (cuenta) => {
@@ -237,84 +305,166 @@ const volver = () => router.push('/');
 </script>
 
 <style scoped>
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
+
 .eliminar-cuenta {
-  font-family: 'Segoe UI', sans-serif;
+  font-family: 'Poppins', sans-serif;
   color: #fff;
-  background: linear-gradient(to bottom, #122523, #000);
+  background: linear-gradient(135deg, #0f2027, #203a43, #2c5364);
   min-height: 100vh;
   display: flex;
   flex-direction: column;
   align-items: center;
   padding: 20px;
+  position: relative;
+}
+
+.back-button {
+  position: absolute;
+  top: 20px;
+  left: 20px;
+  background: rgba(255, 255, 255, 0.1);
+  border: none;
+  color: #fff;
+  padding: 8px 15px;
+  border-radius: 20px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  transition: all 0.3s;
+  backdrop-filter: blur(5px);
+  z-index: 10;
+}
+
+.back-button:hover {
+  background: rgba(255, 255, 255, 0.2);
+  transform: translateX(-3px);
 }
 
 .hero {
-  padding: 60px 20px 40px;
+  padding: 80px 20px 50px;
   text-align: center;
+  position: relative;
+  width: 100%;
+  max-width: 1200px;
+}
+
+.hero::after {
+  content: '';
+  position: absolute;
+  bottom: 30px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 100px;
+  height: 3px;
+  background: linear-gradient(90deg, transparent, #ff4d4d, transparent);
 }
 
 .titulo {
   font-size: 2.5rem;
   font-weight: 800;
-  color: #ff4d4d;
+  background: linear-gradient(to right, #ff4d4d, #f72585);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
   margin-bottom: 15px;
+  text-shadow: 0 0 20px rgba(255, 77, 77, 0.3);
+  letter-spacing: 1px;
 }
 
 .descripcion {
   font-size: 1.2rem;
-  color: #ccc;
+  color: #a0a8c0;
+  max-width: 600px;
+  margin: 0 auto;
+  line-height: 1.6;
 }
 
 .filtros {
   width: 100%;
-  max-width: 1000px;
+  max-width: 1200px;
   margin-bottom: 30px;
 }
 
 .filtros-container {
-  background: rgba(0, 0, 0, 0.7);
-  padding: 20px;
-  border-radius: 15px;
-  box-shadow: 0 0 20px rgba(255, 77, 77, 0.1);
+  background: rgba(15, 23, 42, 0.5);
+  backdrop-filter: blur(10px);
+  padding: 25px;
+  border-radius: 20px;
+  border: 1px solid rgba(255, 77, 77, 0.2);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
 }
 
 .filtros-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: 15px;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 20px;
 }
 
-.input-filtro,
-.select-filtro {
-  width: 100%;
-  padding: 12px 15px;
-  border: 1px solid #ff4d4d;
-  border-radius: 8px;
-  background-color: rgba(0, 0, 0, 0.5);
+.input-group {
+  display: flex;
+  align-items: center;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 10px;
+  overflow: hidden;
+  transition: all 0.3s;
+  border: 1px solid rgba(255, 77, 77, 0.2);
+}
+
+.input-group:hover {
+  border-color: rgba(255, 77, 77, 0.4);
+}
+
+.input-group-text {
+  padding: 0 15px;
+  background: rgba(255, 77, 77, 0.2);
+  color: #ff4d4d;
+  height: 50px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.1rem;
+}
+
+.form-control {
+  flex: 1;
+  height: 50px;
+  padding: 0 15px;
+  background: transparent;
+  border: none;
   color: #fff;
   font-size: 1rem;
 }
 
-.select-filtro {
+.form-control:focus {
+  outline: none;
+  box-shadow: 0 0 0 2px rgba(255, 77, 77, 0.3);
+}
+
+select.form-control {
   appearance: none;
   background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23ff4d4d'%3e%3cpath d='M7 10l5 5 5-5z'/%3e%3c/svg%3e");
   background-repeat: no-repeat;
-  background-position: right 10px center;
+  background-position: right 15px center;
   background-size: 20px;
 }
 
 .tabla-container {
   width: 100%;
-  max-width: 1000px;
-  background: rgba(0, 0, 0, 0.7);
-  border-radius: 15px;
-  padding: 20px;
+  max-width: 1200px;
+  background: rgba(15, 23, 42, 0.5);
+  backdrop-filter: blur(10px);
+  border-radius: 20px;
+  padding: 25px;
   margin-bottom: 30px;
-  box-shadow: 0 0 20px rgba(255, 77, 77, 0.1);
+  border: 1px solid rgba(255, 77, 77, 0.1);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
 }
 
 .tabla-scroll {
   overflow-x: auto;
+  border-radius: 15px;
 }
 
 .tabla-cuentas {
@@ -326,7 +476,7 @@ const volver = () => router.push('/');
 .tabla-cuentas td {
   padding: 15px;
   text-align: left;
-  border-bottom: 1px solid #333;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .tabla-cuentas th {
@@ -334,27 +484,45 @@ const volver = () => router.push('/');
   font-weight: 600;
   cursor: pointer;
   user-select: none;
+  position: relative;
+  transition: all 0.3s;
+}
+
+.tabla-cuentas th:hover {
+  background: rgba(255, 77, 77, 0.1);
+}
+
+.tabla-cuentas th span {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.tabla-cuentas tbody tr {
+  transition: all 0.3s;
 }
 
 .tabla-cuentas tbody tr:hover {
-  background-color: rgba(255, 255, 255, 0.05);
+  background-color: rgba(255, 77, 77, 0.05);
+  transform: translateX(5px);
 }
 
 .estado {
-  padding: 5px 10px;
+  padding: 6px 12px;
   border-radius: 20px;
   font-size: 0.9rem;
   font-weight: 600;
+  display: inline-block;
 }
 
 .estado.activo {
-  background-color: rgba(40, 167, 69, 0.2);
-  color: #28a745;
+  background: rgba(61, 237, 151, 0.2);
+  color: #3ded97;
 }
 
 .estado.inactivo {
-  background-color: rgba(108, 117, 125, 0.2);
-  color: #6c757d;
+  background: rgba(108, 117, 125, 0.2);
+  color: #a0a8c0;
 }
 
 .acciones {
@@ -365,76 +533,113 @@ const volver = () => router.push('/');
 
 .sin-resultados {
   text-align: center;
-  padding: 30px;
-  color: #ccc;
+  padding: 50px;
+  color: #a0a8c0;
   font-size: 1.1rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 15px;
+}
+
+.sin-resultados i {
+  font-size: 2rem;
+  color: #ff4d4d;
+  opacity: 0.7;
 }
 
 .cargando,
 .error {
   text-align: center;
   padding: 30px;
-  color: #ccc;
+  color: #a0a8c0;
   font-size: 1.1rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 15px;
 }
 
 .error {
   color: #ff4d4d;
 }
 
-.boton-volver {
-  margin-bottom: 30px;
+.error i {
+  font-size: 2rem;
 }
 
-.btn-accion {
-  background-color: #ff4d4d;
-  color: #fff;
-  padding: 12px 25px;
-  font-size: 1rem;
+.spinner {
+  width: 40px;
+  height: 40px;
+  border: 4px solid rgba(255, 77, 77, 0.3);
+  border-radius: 50%;
+  border-top-color: #ff4d4d;
+  animation: spin 1s ease-in-out infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.btn-accion, .btn-secundario, .btn-eliminar {
+  padding: 10px 20px;
   border: none;
-  border-radius: 30px;
+  border-radius: 50px;
+  font-weight: 600;
   cursor: pointer;
-  box-shadow: 0 0 10px #ff4d4d;
-  transition: 0.3s;
+  transition: all 0.3s;
   display: flex;
   align-items: center;
   gap: 8px;
+  font-size: 0.95rem;
+}
+
+.btn-accion {
+  background: linear-gradient(135deg, #3ded97, #2a9d8f);
+  color: #fff;
+  box-shadow: 0 4px 15px rgba(61, 237, 151, 0.3);
 }
 
 .btn-accion:hover {
-  background-color: #e04444;
+  transform: translateY(-3px);
+  box-shadow: 0 8px 20px rgba(61, 237, 151, 0.4);
 }
 
-.btn-pequeno {
-  padding: 8px 15px;
-  font-size: 0.9rem;
-}
-
-.btn-eliminar {
-  background-color: #dc3545;
-  box-shadow: 0 0 10px #dc3545;
-}
-
-.btn-eliminar:hover {
-  background-color: #c82333;
+.btn-accion:disabled {
+  background: #6b7280;
+  cursor: not-allowed;
+  transform: none !important;
+  box-shadow: none !important;
 }
 
 .btn-secundario {
-  background-color: #6c757d;
-  box-shadow: 0 0 10px #6c757d;
+  background: rgba(255, 255, 255, 0.1);
+  color: #fff;
+  border: 1px solid rgba(255, 255, 255, 0.2);
 }
 
 .btn-secundario:hover {
-  background-color: #5a6268;
+  background: rgba(255, 255, 255, 0.2);
+  transform: translateY(-3px);
 }
 
-.btn-cancelar {
-  background-color: #6c757d;
-  box-shadow: 0 0 10px #6c757d;
+.btn-eliminar {
+  background: linear-gradient(135deg, #ff4d4d, #f72585);
+  color: #fff;
+  box-shadow: 0 4px 15px rgba(255, 77, 77, 0.3);
 }
 
-.btn-cancelar:hover {
-  background-color: #5a6268;
+.btn-eliminar:hover {
+  background: linear-gradient(135deg, #e04444, #d5176e);
+  transform: translateY(-3px);
+  box-shadow: 0 8px 20px rgba(255, 77, 77, 0.4);
+}
+
+.btn-eliminar:disabled {
+  background: #6b7280;
+  cursor: not-allowed;
+  transform: none !important;
+  box-shadow: none !important;
 }
 
 .modal-overlay {
@@ -448,43 +653,74 @@ const volver = () => router.push('/');
   justify-content: center;
   align-items: center;
   z-index: 1000;
+  backdrop-filter: blur(5px);
 }
 
 .modal-contenido {
-  background: linear-gradient(to bottom, #122523, #000);
-  padding: 30px;
-  border-radius: 15px;
+  background: rgba(15, 23, 42, 0.95);
+  padding: 40px;
+  border-radius: 20px;
   width: 90%;
   max-width: 500px;
-  border: 1px solid #ff4d4d;
-  box-shadow: 0 0 30px rgba(255, 77, 77, 0.3);
   text-align: center;
+  backdrop-filter: blur(10px);
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.3);
 }
 
 .modal-exito {
-  border-color: #28a745;
-  box-shadow: 0 0 30px rgba(40, 167, 69, 0.3);
+  border: 1px solid rgba(61, 237, 151, 0.5);
 }
 
 .modal-error {
-  border-color: #dc3545;
-  box-shadow: 0 0 30px rgba(220, 53, 69, 0.3);
+  border: 1px solid rgba(244, 63, 94, 0.5);
 }
 
 .modal-advertencia {
-  border-color: #ffc107;
-  box-shadow: 0 0 30px rgba(255, 193, 7, 0.3);
+  border: 1px solid rgba(255, 193, 7, 0.5);
+}
+
+.modal-icono-exito,
+.modal-icono-error,
+.modal-icono-advertencia {
+  width: 80px;
+  height: 80px;
+  margin: 0 auto 20px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 2.5rem;
+}
+
+.modal-icono-exito {
+  background: linear-gradient(135deg, rgba(61, 237, 151, 0.2), transparent);
+  color: #3ded97;
+}
+
+.modal-icono-error {
+  background: linear-gradient(135deg, rgba(244, 63, 94, 0.2), transparent);
+  color: #f43f5e;
+}
+
+.modal-icono-advertencia {
+  background: linear-gradient(135deg, rgba(255, 193, 7, 0.2), transparent);
+  color: #ffc107;
 }
 
 .modal-contenido h3 {
-  font-size: 1.5rem;
-  margin-bottom: 20px;
-  color: #ff4d4d;
+  font-size: 1.8rem;
+  margin-bottom: 15px;
+  color: #fff;
 }
 
 .modal-contenido p {
   margin-bottom: 30px;
-  color: #ccc;
+  color: #a0a8c0;
+  font-size: 1.1rem;
+}
+
+.modal-contenido strong {
+  color: #ff4d4d;
 }
 
 .botones-modal {
@@ -497,8 +733,27 @@ const volver = () => router.push('/');
   margin-top: auto;
   padding: 30px 0;
   font-size: 0.9rem;
-  color: #888;
+  color: #6b7280;
   text-align: center;
+  position: relative;
+  width: 100%;
+}
+
+.footer::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 200px;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(255, 77, 77, 0.5), transparent);
+}
+
+@media (max-width: 992px) {
+  .filtros-grid {
+    grid-template-columns: 1fr 1fr;
+  }
 }
 
 @media (max-width: 768px) {
@@ -512,7 +767,33 @@ const volver = () => router.push('/');
 
   .tabla-cuentas th,
   .tabla-cuentas td {
-    padding: 10px 5px;
+    padding: 12px 8px;
+    font-size: 0.9rem;
+  }
+
+  .hero {
+    padding: 60px 20px 40px;
+  }
+
+  .titulo {
+    font-size: 2rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .back-button {
+    top: 10px;
+    left: 10px;
+    padding: 5px 10px;
+    font-size: 0.9rem;
+  }
+
+  .modal-contenido {
+    padding: 30px 20px;
+  }
+
+  .btn-accion, .btn-secundario, .btn-eliminar {
+    padding: 8px 15px;
     font-size: 0.9rem;
   }
 }
