@@ -11,68 +11,70 @@
     </section>
 
     <!-- Buscador de cuentas -->
-    <section class="filtros animate__animated animate__fadeIn" style="animation-delay: 0.1s">
-      <div class="filtros-container">
-        <div class="input-group">
-          <span class="input-group-text"><i class="bi bi-search"></i></span>
-          <input
-            type="text"
-            v-model="busqueda"
-            class="form-control"
-            placeholder="Buscar por número de cuenta, nombre o ID de cliente..."
-          />
-        </div>
+    <section class="buscador animate__animated animate__fadeIn" style="animation-delay: 0.1s">
+      <div class="input-group">
+        <span class="input-group-text"><i class="bi bi-search"></i></span>
+        <input
+          type="text"
+          v-model="busqueda"
+          class="form-control"
+          placeholder="Buscar por número de cuenta, nombre o ID de cliente..."
+        />
       </div>
     </section>
 
     <!-- Mensaje de carga o error -->
-    <div v-if="loading" class="cargando animate__animated animate__fadeIn">Cargando cuentas...</div>
-    <div v-if="error" class="error animate__animated animate__fadeIn">{{ error }}</div>
+    <div v-if="loading" class="cargando animate__animated animate__fadeIn">
+      <div class="spinner"></div>
+      Cargando cuentas...
+    </div>
+    <div v-if="error" class="error animate__animated animate__shakeX">
+      <i class="bi bi-exclamation-triangle"></i> {{ error }}
+    </div>
 
     <!-- Lista de cuentas filtradas -->
-    <section class="lista-cuentas" v-else>
-      <div v-if="cuentasFiltradas.length">
+    <section class="lista-cuentas animate__animated animate__fadeIn" style="animation-delay: 0.2s" v-else>
+      <div v-if="cuentasFiltradas.length" class="cuentas-grid">
         <div 
-          class="card-accion animate__animated animate__fadeInUp"
+          class="cuenta-card animate__animated animate__fadeInUp"
           v-for="(cuenta, index) in cuentasFiltradas"
           :key="cuenta.id"
           :style="`animation-delay: ${index * 0.1}s`"
           @click="seleccionarCuenta(cuenta)"
           :class="{ 'selected-origin': cuentaSeleccionada?.id === cuenta.id }"
         >
-          <div class="icono-wrapper">
-            <div class="icono account-icon-savings">
-              <i class="bi bi-bank"></i>
-            </div>
-            <div class="glow glow-green"></div>
+          <div class="cuenta-info">
+            <h3>{{ cuenta.clientName || 'Desconocido' }}</h3>
+            <p class="numero-cuenta">{{ cuenta.accountNumber }}</p>
+            <p class="documento">Cliente ID: {{ cuenta.clientId }}</p>
           </div>
-          <h3>{{ cuenta.clientName || 'Desconocido' }}</h3>
-          <p class="descripcion-card">{{ cuenta.accountNumber }}</p>
-          <p class="saldo-cuenta">Saldo: ${{ cuenta.balance.toFixed(2) }}</p>
-          <small>ID Cliente: {{ cuenta.clientId }}</small>
+          <div class="saldo">
+            <span class="badge-saldo">${{ cuenta.balance.toFixed(2) }}</span>
+          </div>
         </div>
       </div>
 
       <div v-else class="sin-resultados animate__animated animate__fadeIn">
-        No se encontraron cuentas.
+        <i class="bi bi-search"></i>
+        <p>No se encontraron cuentas</p>
       </div>
     </section>
 
     <!-- Formulario de extracción -->
-    <section v-if="cuentaSeleccionada" class="form-section animate__animated animate__fadeIn" style="animation-delay: 0.2s">
+    <section v-if="cuentaSeleccionada" class="formulario-deposito animate__animated animate__fadeInUp">
       <div class="formulario-container">
-        <h2 class="subtitulo">Cuenta seleccionada: {{ cuentaSeleccionada.accountNumber }}</h2>
-        
+        <h2 class="subtitulo">
+          <i class="bi bi-cash-stack"></i> Extracción de cuenta: {{ cuentaSeleccionada.accountNumber }}
+        </h2>
+
         <div class="info-cliente">
-          <p><strong>Cliente:</strong> {{ cuentaSeleccionada.clientName || 'Desconocido' }}</p>
-          <p><strong>Saldo actual:</strong> ${{ cuentaSeleccionada.balance.toFixed(2) }}</p>
+          <p><span>Cliente:</span> {{ cuentaSeleccionada.clientName || 'Desconocido' }}</p>
+          <p><span>Saldo actual:</span> ${{ cuentaSeleccionada.balance.toFixed(2) }}</p>
         </div>
 
-        <form @submit.prevent="extraerDinero" class="transfer-form">
-          <div class="form-group">
-            <label class="form-label">
-              <i class="bi bi-cash-coin"></i> Monto a Extraer
-            </label>
+        <form @submit.prevent="extraerDinero" class="form-deposito">
+          <div class="form-grupo animate__animated animate__fadeIn" style="animation-delay: 0.1s">
+            <label class="form-label"><i class="bi bi-currency-dollar"></i> Monto a Extraer</label>
             <div class="input-group">
               <span class="input-group-text">$</span>
               <input
@@ -91,17 +93,17 @@
             </div>
           </div>
 
-          <div class="buttons-group">
+          <div class="botones-form animate__animated animate__fadeIn" style="animation-delay: 0.2s">
             <button 
               type="submit" 
-              class="btn-accion" 
+              class="btn-depositar" 
               :disabled="loading"
             >
-              <i class="bi bi-cash-stack"></i> {{ loading ? 'Procesando...' : 'Confirmar Extracción' }}
+              <i class="bi bi-check-circle"></i> {{ loading ? 'Procesando...' : 'Confirmar Extracción' }}
             </button>
             <button
               @click.prevent="exportarPDF"
-              class="btn-comprobante"
+              class="btn-secundario"
               :disabled="loading"
             >
               <i class="bi bi-file-earmark-pdf"></i> Exportar en PDF
@@ -109,13 +111,14 @@
           </div>
         </form>
 
-        <div v-if="mensaje" :class="['mensaje', mensajeError ? 'error' : 'exito']">
+        <div v-if="mensaje" :class="['mensaje', { 'mensaje-error': mensajeError }]" class="animate__animated animate__fadeIn">
+          <i :class="mensajeError ? 'bi bi-x-circle' : 'bi bi-check-circle'"></i>
           {{ mensaje }}
         </div>
       </div>
     </section>
 
-    <footer class="footer animate__animated animate__fadeIn" style="animation-delay: 0.3s">
+    <footer class="footer animate__animated animate__fadeIn">
       © 2025 Gestión Premium. Todos los derechos reservados.
     </footer>
   </div>
@@ -329,17 +332,17 @@ const volver = () => router.push('/');
 }
 
 .hero {
-  padding: 60px 20px 40px;
+  padding: 80px 20px 50px;
   text-align: center;
   position: relative;
   width: 100%;
-  max-width: 1000px;
+  max-width: 1200px;
 }
 
 .hero::after {
   content: '';
   position: absolute;
-  bottom: 20px;
+  bottom: 30px;
   left: 50%;
   transform: translateX(-50%);
   width: 100px;
@@ -352,7 +355,7 @@ const volver = () => router.push('/');
   font-weight: 800;
   background: linear-gradient(to right, #3ded97, #2fa8f8);
   -webkit-background-clip: text;
-  background-clip: text; 
+  background-clip: text;
   -webkit-text-fill-color: transparent;
   margin-bottom: 15px;
   text-shadow: 0 0 20px rgba(61, 237, 151, 0.3);
@@ -367,18 +370,10 @@ const volver = () => router.push('/');
   line-height: 1.6;
 }
 
-.filtros {
+.buscador {
   width: 100%;
-  max-width: 1000px;
+  max-width: 800px;
   margin-bottom: 30px;
-}
-
-.filtros-container {
-  background: rgba(15, 23, 42, 0.5);
-  backdrop-filter: blur(10px);
-  border-radius: 20px;
-  padding: 25px;
-  border: 1px solid rgba(61, 237, 151, 0.1);
 }
 
 .input-group {
@@ -387,20 +382,28 @@ const volver = () => router.push('/');
   background: rgba(255, 255, 255, 0.1);
   border-radius: 10px;
   overflow: hidden;
+  transition: all 0.3s;
+  border: 1px solid rgba(61, 237, 151, 0.2);
+}
+
+.input-group:hover {
+  border-color: rgba(61, 237, 151, 0.4);
 }
 
 .input-group-text {
   padding: 0 15px;
-  background: rgba(255, 255, 255, 0.2);
-  color: #fff;
-  height: 45px;
+  background: rgba(61, 237, 151, 0.2);
+  color: #3ded97;
+  height: 50px;
   display: flex;
   align-items: center;
+  justify-content: center;
+  font-size: 1.1rem;
 }
 
 .form-control {
   flex: 1;
-  height: 45px;
+  height: 50px;
   padding: 0 15px;
   background: transparent;
   border: none;
@@ -417,28 +420,30 @@ const volver = () => router.push('/');
   width: 100%;
   max-width: 1000px;
   margin-bottom: 30px;
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-  gap: 15px;
 }
 
-.card-accion {
-  background: rgba(15, 23, 42, 0.7);
-  backdrop-filter: blur(5px);
+.cuentas-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+  gap: 20px;
+}
+
+.cuenta-card {
+  background: rgba(15, 23, 42, 0.5);
+  backdrop-filter: blur(10px);
   border-radius: 15px;
-  padding: 20px;
+  padding: 25px;
   cursor: pointer;
   transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
   border: 1px solid rgba(61, 237, 151, 0.1);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
   position: relative;
   overflow: hidden;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  text-align: center;
 }
 
-.card-accion::before {
+.cuenta-card::before {
   content: '';
   position: absolute;
   top: -50%;
@@ -450,13 +455,13 @@ const volver = () => router.push('/');
   transition: opacity 0.4s;
 }
 
-.card-accion:hover {
-  transform: translateY(-5px);
-  box-shadow: 0 10px 20px rgba(61, 237, 151, 0.15);
+.cuenta-card:hover {
+  transform: translateY(-10px);
+  box-shadow: 0 15px 30px rgba(61, 237, 151, 0.15);
   border-color: rgba(61, 237, 151, 0.3);
 }
 
-.card-accion:hover::before {
+.cuenta-card:hover::before {
   opacity: 0.5;
 }
 
@@ -466,149 +471,148 @@ const volver = () => router.push('/');
   box-shadow: 0 0 15px rgba(61, 237, 151, 0.2) !important;
 }
 
-.icono-wrapper {
-  position: relative;
-  width: 60px;
-  height: 60px;
-  margin: 0 auto 15px;
-}
-
-.icono {
-  width: 100%;
-  height: 100%;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 1.5rem;
-  position: relative;
-  z-index: 2;
-  transition: all 0.3s;
-}
-
-.icono i {
-  color: white;
-}
-
-.account-icon-savings {
-  background: linear-gradient(135deg, #3ded97, #2a9d8f);
-}
-
-.glow {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  border-radius: 50%;
-  opacity: 0.7;
-  filter: blur(15px);
-  transition: all 0.3s;
-}
-
-.glow-green { background-color: #3ded97; }
-
-.card-accion h3 {
-  font-size: 1.1rem;
-  font-weight: 600;
+.cuenta-info h3 {
+  font-size: 1.2rem;
   margin-bottom: 5px;
   color: #fff;
 }
 
-.descripcion-card {
-  font-size: 0.9rem;
-  color: #a0a8c0;
+.numero-cuenta {
+  color: #3ded97;
+  font-weight: 600;
   margin-bottom: 5px;
 }
 
-.saldo-cuenta {
-  font-size: 1rem;
-  font-weight: 600;
-  color: #3ded97;
-  margin: 10px 0;
+.documento {
+  color: #a0a8c0;
+  font-size: 0.9rem;
 }
 
-.card-accion small {
-  font-size: 0.8rem;
-  color: #6b7280;
+.badge-saldo {
+  background: rgba(61, 237, 151, 0.2);
+  color: #3ded97;
+  padding: 10px 20px;
+  border-radius: 20px;
+  font-weight: 600;
+  font-size: 1rem;
+  transition: all 0.3s;
+}
+
+.cuenta-card:hover .badge-saldo {
+  background: rgba(61, 237, 151, 0.3);
+  box-shadow: 0 0 15px rgba(61, 237, 151, 0.2);
 }
 
 .sin-resultados {
   text-align: center;
-  padding: 30px;
+  padding: 50px;
   color: #a0a8c0;
   font-size: 1.1rem;
-  grid-column: 1 / -1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 15px;
 }
 
-.cargando {
-  text-align: center;
-  padding: 30px;
-  color: #a0a8c0;
-  font-size: 1.1rem;
+.sin-resultados i {
+  font-size: 2rem;
+  color: #3ded97;
+  opacity: 0.7;
 }
 
+.cargando,
 .error {
   text-align: center;
   padding: 30px;
-  color: #ff6b6b;
+  color: #a0a8c0;
   font-size: 1.1rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 15px;
 }
 
-.form-section {
-  background: rgba(15, 23, 42, 0.5);
-  backdrop-filter: blur(10px);
-  border-radius: 20px;
-  padding: 30px;
-  border: 1px solid rgba(61, 237, 151, 0.1);
+.error {
+  color: #ff4d4d;
+}
+
+.error i {
+  font-size: 2rem;
+}
+
+.spinner {
+  width: 40px;
+  height: 40px;
+  border: 4px solid rgba(61, 237, 151, 0.3);
+  border-radius: 50%;
+  border-top-color: #3ded97;
+  animation: spin 1s ease-in-out infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.formulario-deposito {
   width: 100%;
-  max-width: 600px;
-  margin: 0 auto;
+  max-width: 800px;
+  margin-top: 30px;
 }
 
-.transfer-form {
+.formulario-container {
+  background: rgba(15, 23, 42, 0.7);
+  backdrop-filter: blur(10px);
+  padding: 40px;
+  border-radius: 20px;
+  border: 1px solid rgba(61, 237, 151, 0.1);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+}
+
+.subtitulo {
+  font-size: 1.8rem;
+  color: #3ded97;
+  margin-bottom: 25px;
+  text-align: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+}
+
+.info-cliente {
+  margin-bottom: 30px;
+}
+
+.info-cliente p {
+  font-size: 1.1rem;
+  margin-bottom: 10px;
+  color: #fff;
+}
+
+.info-cliente span {
+  color: #3ded97;
+  font-weight: 600;
+}
+
+.form-deposito {
   display: flex;
   flex-direction: column;
   gap: 25px;
 }
 
-.form-group {
+.form-grupo {
   display: flex;
   flex-direction: column;
   gap: 10px;
 }
 
 .form-label {
-  font-size: 1.2rem;
+  font-size: 1.1rem;
   color: #fff;
+  font-weight: 500;
   display: flex;
   align-items: center;
-  font-weight: bold;
-  gap: 10px;
-}
-
-.subtitulo {
-  font-size: 1.8rem;
-  color: #3ded97;
-  margin-bottom: 20px;
-  text-align: center;
-}
-
-.info-cliente {
-  margin-bottom: 30px;
-  background: rgba(15, 23, 42, 0.3);
-  padding: 20px;
-  border-radius: 10px;
-  border: 1px solid rgba(61, 237, 151, 0.1);
-}
-
-.info-cliente p {
-  margin-bottom: 10px;
-  color: #fff;
-}
-
-.info-cliente strong {
-  color: #3ded97;
+  gap: 8px;
 }
 
 .saldo-disponible {
@@ -617,13 +621,14 @@ const volver = () => router.push('/');
   margin-top: 5px;
 }
 
-.buttons-group {
+.botones-form {
   display: flex;
-  gap: 15px;
   justify-content: center;
+  gap: 20px;
+  margin-top: 30px;
 }
 
-.btn-accion, .btn-comprobante {
+.btn-depositar, .btn-secundario {
   padding: 12px 25px;
   border: none;
   border-radius: 50px;
@@ -635,55 +640,58 @@ const volver = () => router.push('/');
   gap: 8px;
 }
 
-.btn-accion {
+.btn-depositar {
   background: linear-gradient(135deg, #3ded97, #2a9d8f);
   color: #fff;
+  box-shadow: 0 4px 15px rgba(61, 237, 151, 0.3);
 }
 
-.btn-accion:hover {
+.btn-depositar:hover {
+  background: linear-gradient(135deg, #34c586, #22867a);
   transform: translateY(-3px);
-  box-shadow: 0 5px 15px rgba(61, 237, 151, 0.4);
+  box-shadow: 0 8px 20px rgba(61, 237, 151, 0.4);
 }
 
-.btn-accion:disabled {
+.btn-depositar:disabled {
   background: #6b7280;
   cursor: not-allowed;
   transform: none !important;
   box-shadow: none !important;
 }
 
-.btn-comprobante {
-  background: linear-gradient(135deg, #4361ee, #3a0ca3);
+.btn-secundario {
+  background: rgba(255, 255, 255, 0.1);
   color: #fff;
+  border: 1px solid rgba(255, 255, 255, 0.2);
 }
 
-.btn-comprobante:hover {
+.btn-secundario:hover {
+  background: rgba(255, 255, 255, 0.2);
   transform: translateY(-3px);
-  box-shadow: 0 5px 15px rgba(67, 97, 238, 0.4);
 }
 
 .mensaje {
+  margin-top: 20px;
   padding: 15px;
   border-radius: 8px;
-  margin-top: 20px;
   text-align: center;
+  font-weight: 600;
+  background: rgba(61, 237, 151, 0.2);
+  color: #3ded97;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
 }
 
-.mensaje.exito {
-  background-color: rgba(40, 167, 69, 0.2);
-  color: #28a745;
-  border: 1px solid #28a745;
-}
-
-.mensaje.error {
-  background-color: rgba(220, 53, 69, 0.2);
-  color: #dc3545;
-  border: 1px solid #dc3545;
+.mensaje-error {
+  background: rgba(244, 63, 94, 0.2);
+  color: #f43f5e;
 }
 
 .footer {
-  margin-top: 50px;
-  padding: 20px 0;
+  margin-top: auto;
+  padding: 30px 0;
   font-size: 0.9rem;
   color: #6b7280;
   text-align: center;
@@ -703,26 +711,26 @@ const volver = () => router.push('/');
 }
 
 @media (max-width: 992px) {
-  .lista-cuentas {
-    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+  .cuentas-grid {
+    grid-template-columns: 1fr 1fr;
   }
 }
 
 @media (max-width: 768px) {
-  .buttons-group {
+  .cuentas-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .botones-form {
     flex-direction: column;
   }
-  
+
   .hero {
-    padding: 40px 20px 30px;
+    padding: 60px 20px 40px;
   }
-  
+
   .titulo {
     font-size: 2rem;
-  }
-  
-  .descripcion {
-    font-size: 1rem;
   }
 }
 
@@ -733,13 +741,14 @@ const volver = () => router.push('/');
     padding: 5px 10px;
     font-size: 0.9rem;
   }
-  
-  .form-section, .filtros-container {
-    padding: 20px 15px;
+
+  .formulario-container {
+    padding: 30px 20px;
   }
-  
-  .card-accion {
-    padding: 15px;
+
+  .btn-depositar, .btn-secundario {
+    padding: 10px 15px;
+    font-size: 0.9rem;
   }
 }
 </style>
