@@ -242,7 +242,7 @@ const solicitarPrestamo = async () => {
 const volver = () => router.push('/')
 </script>
 
-<style scoped>
+<style>
 /* Estilos base del contenedor principal */
 .prestamos-app {
   font-family: 'Poppins', sans-serif;

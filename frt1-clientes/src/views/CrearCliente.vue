@@ -155,6 +155,7 @@ const submitForm = async () => {
 };
 
 const cancelar = () => {
+  console.log('Operación cancelada');
   router.push('/');
 };
 </script>

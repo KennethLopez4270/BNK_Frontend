@@ -2,15 +2,17 @@
   <div class="app-container">
     <!-- Navbar -->
     <nav class="navbar">
-      <h2 class="logo">Startup Chuno</h2>
+      <h2 class="logo" @click="irAHomePrincipal" style="cursor: pointer;">
+        Startup Chuno
+      </h2>
       <div class="nav-links">
         <button class="nav-btn" @click="irAHomePrincipal()">
-          <i class="bi bi-house"></i> Inicio
+          <i class="bi bi-house"></i> Home
         </button>
         <button class="nav-btn" @click="load('http://localhost:5174')">
           <i class="bi bi-credit-card"></i> Gestión Clientes
         </button>
-        <button class="nav-btn" @click="load('http://localhost:5173')">
+        <button class="nav-btn" @click="load('http://localhost:5175')">
           <i class="bi bi-arrow-left-right"></i> Gestión Cuentas
         </button>
         <button class="nav-btn" @click="load('http://localhost:5178')">
