@@ -1,40 +1,48 @@
 <template>
-  <div class="obtener-clientes">
-    <section class="hero">
+  <div class="clientes-app">
+    <section class="hero animate__animated animate__fadeIn">
       <h1 class="titulo">Listado de Clientes</h1>
       <p class="descripcion">
-        Visualiza y gestiona todos los clientes registrados en el sistema.
+        Visualiza y gestiona todos los clientes registrados en el sistema
       </p>
     </section>
 
-    <section class="filtros">
-      <div class="busqueda">
-        <input
-          type="text"
-          v-model="filtroNombre"
-          placeholder="Buscar por nombre..."
-          class="input-busqueda"
-        />
-        <input
-          type="text"
-          v-model="filtroDocumento"
-          placeholder="Buscar por documento..."
-          class="input-busqueda"
-        />
+    <section class="filtros-container animate__animated animate__fadeInUp">
+      <div class="filtros">
+        <div class="input-group">
+          <i class="bi bi-search icono-input"></i>
+          <input
+            type="text"
+            v-model="filtroNombre"
+            placeholder="Buscar por nombre..."
+            class="input-busqueda"
+          />
+        </div>
+        
+        <div class="input-group">
+          <i class="bi bi-card-text icono-input"></i>
+          <input
+            type="text"
+            v-model="filtroDocumento"
+            placeholder="Buscar por documento..."
+            class="input-busqueda"
+          />
+        </div>
+        
         <button @click="resetFiltros" class="btn-accion btn-limpiar">
-          Limpiar
+          <i class="bi bi-arrow-counterclockwise"></i> Limpiar
         </button>
       </div>
     </section>
 
-    <section class="tabla-container">
+    <section class="tabla-container animate__animated animate__fadeInUp">
       <div class="tabla-header">
         <div class="total-clientes">
-          Mostrando {{ clientesFiltrados.length }} de {{ clientes.length }} clientes
+          <i class="bi bi-people-fill"></i> Mostrando {{ clientesFiltrados.length }} de {{ clientes.length }} clientes
         </div>
         <!--
         <button @click="descargarExcel" class="btn-accion btn-exportar">
-          Exportar a Excel
+          <i class="bi bi-file-earmark-excel"></i> Exportar
         </button> -->
       </div>
 
@@ -42,25 +50,34 @@
         <table class="tabla-clientes">
           <thead>
             <tr>
-              <th @click="ordenarPor('fullName')">
-                Nombre
-                <span v-if="campoOrden === 'fullName'">
-                  {{ ordenAscendente ? '↑' : '↓' }}
-                </span>
+              <th @click="ordenarPor('fullName')" class="sortable-header">
+                <div class="header-content">
+                  <span>Nombre</span>
+                  <i class="bi" :class="{
+                    'bi-arrow-up': campoOrden === 'fullName' && ordenAscendente,
+                    'bi-arrow-down': campoOrden === 'fullName' && !ordenAscendente
+                  }"></i>
+                </div>
               </th>
               <th>Email</th>
               <th>Teléfono</th>
-              <th @click="ordenarPor('documentType')">
-                Tipo Doc.
-                <span v-if="campoOrden === 'documentType'">
-                  {{ ordenAscendente ? '↑' : '↓' }}
-                </span>
+              <th @click="ordenarPor('documentType')" class="sortable-header">
+                <div class="header-content">
+                  <span>Tipo Doc.</span>
+                  <i class="bi" :class="{
+                    'bi-arrow-up': campoOrden === 'documentType' && ordenAscendente,
+                    'bi-arrow-down': campoOrden === 'documentType' && !ordenAscendente
+                  }"></i>
+                </div>
               </th>
-              <th @click="ordenarPor('documentNumber')">
-                N° Documento
-                <span v-if="campoOrden === 'documentNumber'">
-                  {{ ordenAscendente ? '↑' : '↓' }}
-                </span>
+              <th @click="ordenarPor('documentNumber')" class="sortable-header">
+                <div class="header-content">
+                  <span>N° Documento</span>
+                  <i class="bi" :class="{
+                    'bi-arrow-up': campoOrden === 'documentNumber' && ordenAscendente,
+                    'bi-arrow-down': campoOrden === 'documentNumber' && !ordenAscendente
+                  }"></i>
+                </div>
               </th>
               <!--
               <th>Acciones</th>-->
@@ -79,19 +96,19 @@
                   @click="editarCliente(cliente.id)" 
                   class="btn-accion btn-pequeno"
                 >
-                  Editar
+                  <i class="bi bi-pencil-square"></i> Editar
                 </button>
                 <button 
                   @click="eliminarCliente(cliente.id)" 
                   class="btn-accion btn-pequeno btn-eliminar"
                 >
-                  Eliminar
+                  <i class="bi bi-trash"></i> Eliminar
                 </button>
               </td> -->
             </tr>
             <tr v-if="clientesFiltrados.length === 0">
               <td colspan="6" class="sin-resultados">
-                No se encontraron clientes
+                <i class="bi bi-exclamation-circle"></i> No se encontraron clientes
               </td>
             </tr>
           </tbody>
@@ -99,7 +116,7 @@
       </div>
     </section>
 
-    <footer class="footer">
+    <footer class="footer animate__animated animate__fadeIn">
       © 2025 Gestión Premium. Todos los derechos reservados.
     </footer>
   </div>
@@ -198,64 +215,118 @@ const descargarExcel = () => {
 </script>
 
 <style scoped>
-.obtener-clientes {
-  font-family: 'Segoe UI', sans-serif;
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
+
+.clientes-app {
+  font-family: 'Poppins', sans-serif;
   color: #fff;
-  background: linear-gradient(to bottom, #122523, #000);
+  background: linear-gradient(135deg, #0f2027, #203a43, #2c5364);
   min-height: 100vh;
   display: flex;
   flex-direction: column;
   align-items: center;
   padding: 20px;
+  overflow-x: hidden;
 }
 
 .hero {
-  padding: 60px 20px 40px;
+  padding: 80px 20px 50px;
   text-align: center;
+  position: relative;
+  width: 100%;
+  max-width: 1200px;
+}
+
+.hero::after {
+  content: '';
+  position: absolute;
+  bottom: 30px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 100px;
+  height: 3px;
+  background: linear-gradient(90deg, transparent, #3ded97, transparent);
 }
 
 .titulo {
-  font-size: 2.5rem;
+  font-size: clamp(1.8rem, 5vw, 2.8rem);
   font-weight: 800;
-  color: #3ded97;
+  background: linear-gradient(to right, #3ded97, #2fa8f8);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  margin-bottom: 15px;
+  text-shadow: 0 0 20px rgba(61, 237, 151, 0.3);
+  letter-spacing: 1px;
 }
 
 .descripcion {
-  font-size: 1.2rem;
-  color: #ccc;
-  margin: 20px 0;
+  font-size: clamp(1.1rem, 2.5vw, 1.3rem);
+  color: #a0a8c0;
+  max-width: 600px;
+  margin: 0 auto;
+  line-height: 1.6;
 }
 
-.filtros {
+.filtros-container {
   width: 100%;
-  max-width: 1000px;
+  max-width: 1100px;
   margin-bottom: 30px;
 }
 
-.busqueda {
+.filtros {
   display: flex;
   gap: 15px;
   flex-wrap: wrap;
+  align-items: center;
+  background: rgba(15, 23, 42, 0.7);
+  backdrop-filter: blur(10px);
+  border-radius: 15px;
+  padding: 20px;
+  border: 1px solid rgba(61, 237, 151, 0.1);
+}
+
+.input-group {
+  flex: 1;
+  min-width: 200px;
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.icono-input {
+  position: absolute;
+  left: 15px;
+  color: #a0a8c0;
+  font-size: 1rem;
 }
 
 .input-busqueda {
   flex: 1;
-  min-width: 200px;
-  padding: 12px 15px;
-  border: 1px solid #3ded97;
-  border-radius: 8px;
-  background-color: rgba(0, 0, 0, 0.5);
+  padding: 12px 15px 12px 40px;
+  border: 1px solid rgba(61, 237, 151, 0.3);
+  border-radius: 10px;
+  background-color: rgba(255, 255, 255, 0.05);
   color: #fff;
   font-size: 1rem;
+  transition: all 0.3s;
+}
+
+.input-busqueda:focus {
+  outline: none;
+  border-color: #3ded97;
+  box-shadow: 0 0 0 2px rgba(61, 237, 151, 0.2);
 }
 
 .tabla-container {
   width: 100%;
-  max-width: 1000px;
-  background: rgba(0, 0, 0, 0.7);
+  max-width: 1100px;
+  background: rgba(15, 23, 42, 0.7);
+  backdrop-filter: blur(10px);
   border-radius: 15px;
   padding: 20px;
-  box-shadow: 0 0 20px rgba(61, 237, 151, 0.2);
+  border: 1px solid rgba(61, 237, 151, 0.1);
+  box-shadow: 0 15px 30px rgba(61, 237, 151, 0.05);
+  margin-bottom: 40px;
 }
 
 .tabla-header {
@@ -266,122 +337,194 @@ const descargarExcel = () => {
 }
 
 .total-clientes {
-  color: #ccc;
+  color: #a0a8c0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
 
 .tabla-scroll {
   overflow-x: auto;
+  border-radius: 10px;
 }
 
 .tabla-clientes {
   width: 100%;
   border-collapse: collapse;
+  background: rgba(15, 23, 42, 0.5);
+  border-radius: 10px;
+  overflow: hidden;
 }
 
 .tabla-clientes th,
 .tabla-clientes td {
   padding: 15px;
   text-align: left;
-  border-bottom: 1px solid #333;
+  border-bottom: 1px solid rgba(61, 237, 151, 0.1);
 }
 
 .tabla-clientes th {
   color: #3ded97;
   font-weight: 600;
-  cursor: pointer;
-  user-select: none;
+  background: rgba(15, 23, 42, 0.8);
 }
 
-.tabla-clientes th:hover {
-  background-color: rgba(61, 237, 151, 0.1);
+.sortable-header {
+  cursor: pointer;
+  transition: background-color 0.3s;
+}
+
+.sortable-header:hover {
+  background-color: rgba(61, 237, 151, 0.1) !important;
+}
+
+.header-content {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.tabla-clientes tbody tr {
+  transition: all 0.3s;
 }
 
 .tabla-clientes tbody tr:hover {
-  background-color: rgba(255, 255, 255, 0.05);
+  background-color: rgba(61, 237, 151, 0.05);
 }
 
 .sin-resultados {
   text-align: center;
   padding: 30px;
-  color: #ccc;
-}
-
-.acciones {
+  color: #a0a8c0;
   display: flex;
-  gap: 10px;
-}
-
-.btn-pequeno {
-  padding: 8px 15px;
-  font-size: 0.9rem;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
 }
 
 .btn-accion {
-  background-color: #24d26a;
+  background: linear-gradient(135deg, #3ded97, #2fa8f8);
   color: #fff;
-  padding: 12px 25px;
-  font-size: 1rem;
+  padding: 10px 20px;
+  font-size: 0.95rem;
   border: none;
   border-radius: 30px;
   cursor: pointer;
-  box-shadow: 0 0 10px #24d26a;
-  transition: 0.3s;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  transition: all 0.3s;
+  box-shadow: 0 0 15px rgba(61, 237, 151, 0.3);
 }
 
 .btn-accion:hover {
-  background-color: #1abc5c;
+  transform: translateY(-2px);
+  box-shadow: 0 5px 20px rgba(61, 237, 151, 0.5);
 }
 
 .btn-limpiar {
-  background-color: #555;
-  box-shadow: 0 0 10px #555;
+  background: rgba(255, 255, 255, 0.1);
+  box-shadow: 0 0 10px rgba(255, 255, 255, 0.1);
 }
 
 .btn-limpiar:hover {
-  background-color: #444;
+  background: rgba(255, 255, 255, 0.2);
 }
 
 .btn-exportar {
-  background-color: #2a7dd1;
-  box-shadow: 0 0 10px #2a7dd1;
-}
-
-.btn-exportar:hover {
-  background-color: #1a6cbe;
+  background: linear-gradient(135deg, #4cc9f0, #4361ee);
 }
 
 .btn-eliminar {
-  background-color: #d9534f;
-  box-shadow: 0 0 10px #d9534f;
+  background: linear-gradient(135deg, #f72585, #b5179e);
 }
 
-.btn-eliminar:hover {
-  background-color: #c9302c;
+.btn-pequeno {
+  padding: 6px 12px;
+  font-size: 0.85rem;
 }
 
 .footer {
   margin-top: auto;
-  padding: 30px 0;
+  padding: 40px 0 30px;
   font-size: 0.9rem;
-  color: #888;
+  color: #6b7280;
   text-align: center;
+  position: relative;
+  width: 100%;
+}
+
+.footer::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 200px;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(61, 237, 151, 0.5), transparent);
 }
 
 @media (max-width: 768px) {
+  .filtros {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  
+  .tabla-header {
+    flex-direction: column;
+    gap: 15px;
+    align-items: flex-start;
+  }
+  
   .tabla-clientes th,
   .tabla-clientes td {
-    padding: 10px 5px;
+    padding: 10px 8px;
     font-size: 0.9rem;
   }
   
-  .acciones {
+  .header-content {
     flex-direction: column;
-    gap: 5px;
+    gap: 2px;
+    align-items: flex-start;
+  }
+}
+
+@media (max-width: 480px) {
+  .tabla-clientes {
+    display: block;
   }
   
-  .btn-pequeno {
-    padding: 5px 10px;
-    font-size: 0.8rem;
+  .tabla-clientes thead {
+    display: none;
+  }
+  
+  .tabla-clientes tbody tr {
+    display: block;
+    margin-bottom: 15px;
+    border: 1px solid rgba(61, 237, 151, 0.2);
+    border-radius: 8px;
+    padding: 10px;
+  }
+  
+  .tabla-clientes tbody td {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 10px;
+    border: none;
+  }
+  
+  .tabla-clientes tbody td::before {
+    content: attr(data-label);
+    font-weight: 600;
+    color: #3ded97;
+    margin-right: 15px;
+  }
+  
+  .sin-resultados {
+    display: block;
+    padding: 20px;
   }
 }
 </style>

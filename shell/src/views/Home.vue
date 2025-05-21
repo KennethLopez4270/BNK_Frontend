@@ -1,33 +1,59 @@
 <template>
-  <div class="prestamos-app">
+  <div class="banco-app">
     <section class="hero animate__animated animate__fadeIn">
-      <h1 class="titulo">Gestión de Préstamos</h1>
+      <h1 class="titulo">Banco Digital</h1>
       <p class="descripcion">
-        Administra los préstamos de forma rápida y segura
+        Gestiona tus productos bancarios de forma rápida y segura
       </p>
     </section>
 
-    <section class="botones-grid">
-      <div 
-        v-for="(boton, index) in botones" 
-        :key="boton.label" 
-        class="card-accion animate__animated animate__fadeInUp"
-        :style="`animation-delay: ${index * 0.1}s`"
-        @click="boton.action"
-        @mouseenter="hoverCard(index)"
-        @mouseleave="hoverCard(null)"
-      >
-        <div class="icono-wrapper">
-          <div class="icono" :class="`bg-${colors[index]}`">
-            <i :class="`bi ${boton.icon}`"></i>
+    <section class="botones-container">
+      <div class="botones-grid">
+        <!-- Primera fila con 3 botones -->
+        <div class="fila primera-fila">
+          <div 
+            v-for="(boton, index) in botones.slice(0, 3)" 
+            :key="boton.label" 
+            class="card-accion animate__animated animate__fadeInUp"
+            :style="`animation-delay: ${index * 0.1}s`"
+            @click="boton.action"
+          >
+            <div class="icono-wrapper">
+              <div class="icono" :class="`bg-${colors[index]}`">
+                <i :class="`bi ${boton.icon}`"></i>
+              </div>
+              <div class="glow" :class="`glow-${colors[index]}`"></div>
+            </div>
+            <h3>{{ boton.label }}</h3>
+            <p class="descripcion-card">{{ boton.descripcion }}</p>
+            <button class="btn-accion">
+              <i class="bi bi-arrow-right"></i>
+            </button>
           </div>
-          <div class="glow" :class="`glow-${colors[index]}`"></div>
         </div>
-        <h3>{{ boton.label }}</h3>
-        <p class="descripcion-card">{{ boton.descripcion }}</p>
-        <button class="btn-accion">
-          <i class="bi bi-arrow-right"></i>
-        </button>
+        
+        <!-- Segunda fila con 2 botones centrados -->
+        <div class="fila segunda-fila">
+          <div 
+            v-for="(boton, index) in botones.slice(3, 5)" 
+            :key="boton.label" 
+            class="card-accion animate__animated animate__fadeInUp"
+            :style="`animation-delay: ${(index + 3) * 0.1}s`"
+            @click="boton.action"
+          >
+            <div class="icono-wrapper">
+              <div class="icono" :class="`bg-${colors[index + 3]}`">
+                <i :class="`bi ${boton.icon}`"></i>
+              </div>
+              <div class="glow" :class="`glow-${colors[index + 3]}`"></div>
+            </div>
+            <h3>{{ boton.label }}</h3>
+            <p class="descripcion-card">{{ boton.descripcion }}</p>
+            <button class="btn-accion">
+              <i class="bi bi-arrow-right"></i>
+            </button>
+          </div>
+        </div>
       </div>
     </section>
 
@@ -43,51 +69,46 @@ import 'animate.css'
 
 const router = useRouter()
 
-const colors = ['blue', 'purple', 'pink', 'green']
+const colors = ['blue', 'purple', 'pink', 'green', 'orange']
 
 const botones = [
   { 
-    label: 'Solicitar Préstamo', 
-    descripcion: 'Crea una nueva solicitud de préstamo', 
+    label: 'Clientes', 
+    descripcion: 'Gestión de clientes y perfiles', 
+    icon: 'bi-people-fill', 
+    action: () => router.push('/clientes') 
+  },
+  { 
+    label: 'Cuentas', 
+    descripcion: 'Administración de cuentas bancarias', 
+    icon: 'bi-bank2', 
+    action: () => router.push('/cuentas') 
+  },
+  { 
+    label: 'Pagos', 
+    descripcion: 'Realiza y gestiona tus pagos', 
+    icon: 'bi-credit-card-fill', 
+    action: () => router.push('/pagos') 
+  },
+  { 
+    label: 'Transferencias', 
+    descripcion: 'Transferencias entre cuentas', 
+    icon: 'bi-arrow-left-right', 
+    action: () => router.push('/transferencias') 
+  },
+  { 
+    label: 'Préstamos', 
+    descripcion: 'Solicitud y gestión de préstamos', 
     icon: 'bi-cash-stack', 
-    action: () => router.push('/crear-prestamo') 
-  },
-  { 
-    label: 'Cancelar Préstamo', 
-    descripcion: 'Anula una solicitud de préstamo existente', 
-    icon: 'bi-x-circle', 
-    action: () => router.push('/eliminar-prestamo') 
-  },
-  { 
-    label: 'Modificar Préstamo', 
-    descripcion: 'Actualiza los términos de un préstamo', 
-    icon: 'bi-pencil-square', 
-    action: () => router.push('/actualizar-prestamo') 
-  },
-  { 
-    label: 'Consultar Préstamos', 
-    descripcion: 'Revisa tu historial de préstamos', 
-    icon: 'bi-list-check', 
-    action: () => router.push('/obtener-prestamos') 
+    action: () => router.push('/prestamos') 
   }
 ]
-
-const hoverCard = (index) => {
-  // Efecto adicional al hacer hover
-  document.querySelectorAll('.card-accion').forEach(card => {
-    card.classList.remove('highlight')
-  })
-  
-  if (index !== null) {
-    document.querySelectorAll('.card-accion')[index].classList.add('highlight')
-  }
-}
 </script>
 
 <style scoped>
 @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
 
-.prestamos-app {
+.banco-app {
   font-family: 'Poppins', sans-serif;
   color: #fff;
   background: linear-gradient(135deg, #0f2027, #203a43, #2c5364);
@@ -137,10 +158,8 @@ const hoverCard = (index) => {
   line-height: 1.6;
 }
 
-.botones-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-  gap: 30px;
+/* Contenedor principal de botones */
+.botones-container {
   width: 100%;
   max-width: 1100px;
   padding: 50px 20px;
@@ -148,11 +167,29 @@ const hoverCard = (index) => {
   z-index: 1;
 }
 
+/* Estructura de filas */
+.fila {
+  display: flex;
+  justify-content: center;
+  gap: 30px;
+  margin-bottom: 30px;
+  flex-wrap: wrap;
+}
+
+.primera-fila {
+  justify-content: space-between;
+}
+
+.segunda-fila {
+  justify-content: center;
+}
+
+/* Estilos de las tarjetas */
 .card-accion {
   background: rgba(15, 23, 42, 0.7);
   backdrop-filter: blur(10px);
   border-radius: 20px;
-  padding: 35px 25px;
+  padding: 30px 20px;
   text-align: center;
   cursor: pointer;
   transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
@@ -160,6 +197,13 @@ const hoverCard = (index) => {
   position: relative;
   overflow: hidden;
   will-change: transform;
+  width: 100%;
+  max-width: 320px;
+  min-width: 250px;
+  min-height: 300px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
 }
 
 .card-accion::before {
@@ -178,11 +222,6 @@ const hoverCard = (index) => {
   transform: translateY(-10px) scale(1.03);
   box-shadow: 0 15px 30px rgba(61, 237, 151, 0.15);
   border-color: rgba(61, 237, 151, 0.3);
-}
-
-.card-accion.highlight {
-  transform: translateY(-5px);
-  box-shadow: 0 10px 20px rgba(61, 237, 151, 0.2);
 }
 
 .card-accion:hover::before {
@@ -220,9 +259,12 @@ const hoverCard = (index) => {
   color: #a0a8c0;
   font-size: 0.95rem;
   margin-bottom: 25px;
-  min-height: 40px;
   line-height: 1.6;
   transition: color 0.3s;
+  flex-grow: 1;
+  display: flex;
+  align-items: center;
+  padding: 0 10px;
 }
 
 .card-accion:hover .descripcion-card {
@@ -253,6 +295,7 @@ const hoverCard = (index) => {
 .bg-purple { background-color: #7b2cbf; }
 .bg-pink { background-color: #f72585; }
 .bg-green { background-color: #4cc9f0; }
+.bg-orange { background-color: #f8961e; }
 
 .icono i {
   color: white;
@@ -274,6 +317,7 @@ const hoverCard = (index) => {
 .glow-purple { background-color: #7b2cbf; }
 .glow-pink { background-color: #f72585; }
 .glow-green { background-color: #4cc9f0; }
+.glow-orange { background-color: #f8961e; }
 
 .card-accion:hover .icono {
   transform: scale(1.1) rotate(5deg);
@@ -355,21 +399,35 @@ const hoverCard = (index) => {
   background: linear-gradient(90deg, transparent, rgba(61, 237, 151, 0.5), transparent);
 }
 
-@media (max-width: 768px) {
-  .botones-grid {
-    grid-template-columns: 1fr 1fr;
-    gap: 20px;
+/* Responsive Design */
+@media (max-width: 900px) {
+  .primera-fila {
+    justify-content: center;
   }
   
-  .titulo {
-    font-size: 2.2rem;
+  .card-accion {
+    max-width: 280px;
   }
 }
 
-@media (max-width: 480px) {
-  .botones-grid {
-    grid-template-columns: 1fr;
-    max-width: 350px;
+@media (max-width: 600px) {
+  .hero {
+    padding: 60px 20px 40px;
+  }
+  
+  .botones-container {
+    padding: 30px 20px;
+  }
+  
+  .fila {
+    gap: 20px;
+    margin-bottom: 20px;
+  }
+  
+  .card-accion {
+    min-width: 100%;
+    max-width: 100%;
+    padding: 25px 15px;
   }
   
   .titulo {
@@ -377,11 +435,7 @@ const hoverCard = (index) => {
   }
   
   .descripcion {
-    font-size: 1.1rem;
-  }
-  
-  .card-accion {
-    padding: 25px 20px;
+    font-size: 1rem;
   }
 }
 </style>
