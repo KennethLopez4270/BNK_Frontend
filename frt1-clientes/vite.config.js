@@ -1,27 +1,10 @@
-// frt1-clientes/vite.config.js
 import { defineConfig } from 'vite'
 import vue from '@vitejs/plugin-vue'
-import federation from '@originjs/vite-plugin-federation'
 
+// https://vite.dev/config/
 export default defineConfig({
-  plugins: [
-    vue(),
-    federation({
-      name: 'clientes',
-      filename: 'remoteEntry.js',
-      exposes: {
-        './AppClientes': './src/AppClientes.vue'
-      },
-      shared: ['vue']
-    })
-  ],
-  build: {
-    target: 'esnext'
-  },
+  plugins: [vue()],
   server: {
-    port: 5173
-  },
-  optimizeDeps: {
-    exclude: ['vue']
+    port: 5174
   }
 })
