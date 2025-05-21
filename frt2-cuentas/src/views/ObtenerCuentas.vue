@@ -1,6 +1,9 @@
 <template>
-  <div class="obtener-cuentas">
-    <section class="hero">
+  <div class="obtener-cuentas-app">
+    <button @click="volver" class="back-button animate__animated animate__fadeIn">
+      <i class="bi bi-arrow-left"></i> Volver
+    </button>
+    <section class="hero animate__animated animate__fadeIn">
       <h1 class="titulo">Obtener Cuentas</h1>
       <p class="descripcion">
         Filtra y selecciona una cuenta para verla a detalle
@@ -8,58 +11,74 @@
     </section>
 
     <!-- Filtros -->
-    <section class="filtros">
+    <section class="filtros animate__animated animate__fadeIn" style="animation-delay: 0.1s">
       <div class="filtros-container">
         <div class="filtros-grid">
-          <input
-            v-model="filtros.accountNumber"
-            type="text"
-            class="input-filtro"
-            placeholder="N° de cuenta"
-          />
-          <input
-            v-model="filtros.clientId"
-            type="text"
-            class="input-filtro"
-            placeholder="ID de cliente"
-          />
-          <select v-model="filtros.accountType" class="select-filtro">
-            <option value="">Tipo de cuenta</option>
-            <option value="ahorro">Ahorro</option>
-            <option value="corriente">Corriente</option>
-          </select>
-          <select v-model="filtros.status" class="select-filtro">
-            <option value="">Estado</option>
-            <option value="activo">Activo</option>
-            <option value="inactivo">Inactivo</option>
-          </select>
+          <div class="form-group">
+            <label class="form-label"><i class="bi bi-credit-card"></i> N° de cuenta</label>
+            <input
+              v-model="filtros.accountNumber"
+              type="text"
+              class="form-control"
+              placeholder="Ej: 1001-0001"
+            />
+          </div>
+          
+          <div class="form-group">
+            <label class="form-label"><i class="bi bi-person-badge"></i> ID de cliente</label>
+            <input
+              v-model="filtros.clientId"
+              type="text"
+              class="form-control"
+              placeholder="Ej: 12345"
+            />
+          </div>
+          
+          <div class="form-group">
+            <label class="form-label"><i class="bi bi-wallet2"></i> Tipo de cuenta</label>
+            <select v-model="filtros.accountType" class="form-control">
+              <option value="">Todos los tipos</option>
+              <option value="ahorro">Ahorro</option>
+              <option value="corriente">Corriente</option>
+            </select>
+          </div>
+          
+          <div class="form-group">
+            <label class="form-label"><i class="bi bi-circle-fill"></i> Estado</label>
+            <select v-model="filtros.status" class="form-control">
+              <option value="">Todos los estados</option>
+              <option value="activo">Activo</option>
+              <option value="inactivo">Inactivo</option>
+            </select>
+          </div>
         </div>
       </div>
     </section>
 
     <!-- Mensaje de carga o error -->
-    <div v-if="loading" class="cargando">Cargando cuentas...</div>
-    <div v-if="error" class="error">{{ error }}</div>
+    <div v-if="loading" class="cargando animate__animated animate__fadeIn">Cargando cuentas...</div>
+    <div v-if="error" class="error animate__animated animate__fadeIn">{{ error }}</div>
 
     <!-- Tabla -->
-    <section class="tabla-container" v-else>
+    <section class="tabla-container animate__animated animate__fadeIn" style="animation-delay: 0.2s" v-else>
       <div v-if="cuentasFiltradas.length" class="tabla-scroll">
         <table class="tabla-cuentas">
           <thead>
             <tr>
-              <th>N° Cuenta</th>
-              <th>ID Cliente</th>
-              <th>Tipo</th>
-              <th>Saldo</th>
-              <th>Estado</th>
+              <th><i class="bi bi-credit-card"></i> N° Cuenta</th>
+              <th><i class="bi bi-person-badge"></i> ID Cliente</th>
+              <th><i class="bi bi-wallet2"></i> Tipo</th>
+              <th><i class="bi bi-cash-stack"></i> Saldo</th>
+              <th><i class="bi bi-circle-fill"></i> Estado</th>
             </tr>
           </thead>
           <tbody>
             <tr 
-              v-for="cuenta in cuentasFiltradas" 
+              v-for="(cuenta, index) in cuentasFiltradas" 
               :key="cuenta.id"
               @click="abrirDetalleCuenta(cuenta)"
-              class="fila-seleccionable"
+              class="fila-seleccionable animate__animated animate__fadeInUp"
+              :style="`animation-delay: ${index * 0.05}s`"
             >
               <td>{{ cuenta.accountNumber }}</td>
               <td>{{ cuenta.clientId }}</td>
@@ -75,22 +94,17 @@
         </table>
       </div>
 
-      <div v-else class="sin-resultados">
+      <div v-else class="sin-resultados animate__animated animate__fadeIn">
         No hay cuentas que coincidan con los filtros.
       </div>
     </section>
 
-    <!-- Botón volver -->
-    <div class="boton-volver">
-      <button @click="volver" class="btn-accion btn-secundario" :disabled="loading">
-        <i class="bi bi-arrow-left"></i> Volver
-      </button>
-    </div>
-
     <!-- Modal Detalle -->
     <div v-if="mostrarModalDetalle" class="modal-overlay" @click="mostrarModalDetalle = false">
-      <div class="modal-contenido modal-info" @click.stop>
-        <h3>Detalle de la cuenta</h3>
+      <div class="modal-contenido animate__animated animate__zoomIn" @click.stop>
+        <h3 class="modal-titulo">
+          <i class="bi bi-info-circle"></i> Detalle de la cuenta
+        </h3>
         
         <div class="detalle-cuenta" v-if="cuentaSeleccionada">
           <div class="detalle-item">
@@ -134,58 +148,17 @@
             <span class="detalle-etiqueta">Última Extracción:</span>
             <span class="detalle-valor">{{ cuentaSeleccionada.lastWithdrawal || 'No disponible' }}</span>
           </div>
-          
-          <div class="detalle-item">
-            <span class="detalle-label">ID Cliente:</span>
-            <span class="detalle-valor">{{ cuentaSeleccionada.client_id }}</span>
-          </div>
-          
-          <div class="detalle-item">
-            <span class="detalle-label">Tipo de cuenta:</span>
-            <span class="detalle-valor">{{ cuentaSeleccionada.account_type }}</span>
-          </div>
-          
-          <div class="detalle-item">
-            <span class="detalle-label">Saldo:</span>
-            <span class="detalle-valor">${{ cuentaSeleccionada.balance.toFixed(2) }}</span>
-          </div>
-          
-          <div class="detalle-item">
-            <span class="detalle-label">Estado:</span>
-            <span :class="`estado ${cuentaSeleccionada.status}`">
-              {{ cuentaSeleccionada.status }}
-            </span>
-          </div>
-          
-          <div class="detalle-item">
-            <span class="detalle-label">Último Depósito:</span>
-            <span class="detalle-valor">{{ cuentaSeleccionada.last_deposit || 'No disponible' }}</span>
-          </div>
-          
-          <div class="detalle-item">
-            <span class="detalle-label">Fecha de Creación:</span>
-            <span class="detalle-valor">{{ cuentaSeleccionada.creation_date }}</span>
-          </div>
-          
-          <div class="detalle-item">
-            <span class="detalle-label">Última Extracción:</span>
-            <span class="detalle-valor">{{ cuentaSeleccionada.last_withdrawal || 'No disponible' }}</span>
-          </div>
         </div>
 
         <div class="modal-footer">
           <button @click="mostrarModalDetalle = false" class="btn-accion">
-            Cerrar
+            <i class="bi bi-x-circle"></i> Cerrar
           </button>
         </div>
-
-        <button @click="mostrarModalDetalle = false" class="btn-accion">
-          Cerrar
-        </button>
       </div>
     </div>
 
-    <footer class="footer">
+    <footer class="footer animate__animated animate__fadeIn" style="animation-delay: 0.3s">
       © 2025 Gestión Premium. Todos los derechos reservados.
     </footer>
   </div>
@@ -194,6 +167,7 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
+import 'animate.css';
 
 const router = useRouter();
 
@@ -256,32 +230,80 @@ const volver = () => router.push('/');
 </script>
 
 <style scoped>
-.obtener-cuentas {
-  font-family: 'Segoe UI', sans-serif;
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
+
+.obtener-cuentas-app {
+  font-family: 'Poppins', sans-serif;
   color: #fff;
-  background: linear-gradient(to bottom, #122523, #000);
+  background: linear-gradient(135deg, #0f2027, #203a43, #2c5364);
   min-height: 100vh;
   display: flex;
   flex-direction: column;
   align-items: center;
   padding: 20px;
+  position: relative;
+}
+
+.back-button {
+  position: absolute;
+  top: 20px;
+  left: 20px;
+  background: rgba(255, 255, 255, 0.1);
+  border: none;
+  color: #fff;
+  padding: 8px 15px;
+  border-radius: 20px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  transition: all 0.3s;
+  backdrop-filter: blur(5px);
+  z-index: 10;
+}
+
+.back-button:hover {
+  background: rgba(255, 255, 255, 0.2);
+  transform: translateX(-3px);
 }
 
 .hero {
   padding: 60px 20px 40px;
   text-align: center;
+  position: relative;
+  width: 100%;
+  max-width: 1000px;
+}
+
+.hero::after {
+  content: '';
+  position: absolute;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 100px;
+  height: 3px;
+  background: linear-gradient(90deg, transparent, #3ded97, transparent);
 }
 
 .titulo {
   font-size: 2.5rem;
   font-weight: 800;
-  color: #3ded97;
+  background: linear-gradient(to right, #3ded97, #2fa8f8);
+  -webkit-background-clip: text;
+  background-clip: text; 
+  -webkit-text-fill-color: transparent;
   margin-bottom: 15px;
+  text-shadow: 0 0 20px rgba(61, 237, 151, 0.3);
+  letter-spacing: 1px;
 }
 
 .descripcion {
   font-size: 1.2rem;
-  color: #ccc;
+  color: #a0a8c0;
+  max-width: 600px;
+  margin: 0 auto;
+  line-height: 1.6;
 }
 
 .filtros {
@@ -291,30 +313,52 @@ const volver = () => router.push('/');
 }
 
 .filtros-container {
-  background: rgba(0, 0, 0, 0.7);
-  padding: 20px;
-  border-radius: 15px;
-  box-shadow: 0 0 20px rgba(61, 237, 151, 0.1);
+  background: rgba(15, 23, 42, 0.5);
+  backdrop-filter: blur(10px);
+  border-radius: 20px;
+  padding: 25px;
+  border: 1px solid rgba(61, 237, 151, 0.1);
 }
 
 .filtros-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: 15px;
+  gap: 20px;
 }
 
-.input-filtro,
-.select-filtro {
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.form-label {
+  font-size: 1rem;
+  color: #fff;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.form-control {
   width: 100%;
-  padding: 12px 15px;
-  border: 1px solid #3ded97;
-  border-radius: 8px;
-  background-color: rgba(0, 0, 0, 0.5);
+  height: 45px;
+  padding: 0 15px;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(61, 237, 151, 0.2);
+  border-radius: 10px;
   color: #fff;
   font-size: 1rem;
+  transition: all 0.3s;
 }
 
-.select-filtro {
+.form-control:focus {
+  outline: none;
+  border-color: #3ded97;
+  box-shadow: 0 0 0 2px rgba(61, 237, 151, 0.3);
+}
+
+select.form-control {
   appearance: none;
   background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%233ded97'%3e%3cpath d='M7 10l5 5 5-5z'/%3e%3c/svg%3e");
   background-repeat: no-repeat;
@@ -325,11 +369,12 @@ const volver = () => router.push('/');
 .tabla-container {
   width: 100%;
   max-width: 1000px;
-  background: rgba(0, 0, 0, 0.7);
-  border-radius: 15px;
-  padding: 20px;
+  background: rgba(15, 23, 42, 0.5);
+  backdrop-filter: blur(10px);
+  border-radius: 20px;
+  padding: 25px;
   margin-bottom: 30px;
-  box-shadow: 0 0 20px rgba(61, 237, 151, 0.1);
+  border: 1px solid rgba(61, 237, 151, 0.1);
 }
 
 .tabla-scroll {
@@ -341,22 +386,28 @@ const volver = () => router.push('/');
   border-collapse: collapse;
 }
 
-.tabla-cuentas th,
-.tabla-cuentas td {
+.tabla-cuentas th {
   padding: 15px;
   text-align: left;
-  border-bottom: 1px solid #333;
-}
-
-.tabla-cuentas th {
   color: #3ded97;
   font-weight: 600;
+  border-bottom: 2px solid rgba(61, 237, 151, 0.3);
   user-select: none;
+  position: sticky;
+  top: 0;
+  background: rgba(15, 23, 42, 0.9);
+  z-index: 1;
+}
+
+.tabla-cuentas td {
+  padding: 12px 15px;
+  text-align: left;
+  border-bottom: 1px solid rgba(61, 237, 151, 0.1);
 }
 
 .fila-seleccionable {
   cursor: pointer;
-  transition: background-color 0.3s;
+  transition: all 0.3s;
 }
 
 .fila-seleccionable:hover {
@@ -368,6 +419,7 @@ const volver = () => router.push('/');
   border-radius: 20px;
   font-size: 0.9rem;
   font-weight: 600;
+  display: inline-block;
 }
 
 .estado.activo {
@@ -383,54 +435,22 @@ const volver = () => router.push('/');
 .sin-resultados {
   text-align: center;
   padding: 30px;
-  color: #ccc;
+  color: #a0a8c0;
   font-size: 1.1rem;
 }
 
 .cargando {
   text-align: center;
   padding: 30px;
-  color: #ccc;
+  color: #a0a8c0;
   font-size: 1.1rem;
 }
 
 .error {
   text-align: center;
   padding: 30px;
-  color: #ff4d4d;
+  color: #ff6b6b;
   font-size: 1.1rem;
-}
-
-.boton-volver {
-  margin-bottom: 30px;
-}
-
-.btn-accion {
-  background-color: #3ded97;
-  color: #fff;
-  padding: 12px 25px;
-  font-size: 1rem;
-  border: none;
-  border-radius: 30px;
-  cursor: pointer;
-  box-shadow: 0 0 10px #3ded97;
-  transition: 0.3s;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.btn-accion:hover {
-  background-color: #24d26a;
-}
-
-.btn-secundario {
-  background-color: #6c757d;
-  box-shadow: 0 0 10px #6c757d;
-}
-
-.btn-secundario:hover {
-  background-color: #5a6268;
 }
 
 .modal-overlay {
@@ -444,40 +464,48 @@ const volver = () => router.push('/');
   justify-content: center;
   align-items: center;
   z-index: 1000;
+  backdrop-filter: blur(5px);
 }
 
 .modal-contenido {
-  background: linear-gradient(to bottom, #122523, #000);
+  background: rgba(15, 23, 42, 0.9);
+  backdrop-filter: blur(10px);
   padding: 30px;
   border-radius: 15px;
   width: 90%;
   max-width: 500px;
-  border: 1px solid #3ded97;
-  box-shadow: 0 0 30px rgba(61, 237, 151, 0.3);
-  text-align: center;
+  border: 1px solid rgba(61, 237, 151, 0.3);
+  box-shadow: 0 0 30px rgba(61, 237, 151, 0.2);
 }
 
-.modal-info {
-  border-color: #17a2b8;
-  box-shadow: 0 0 30px rgba(23, 162, 184, 0.3);
-}
-
-.modal-contenido h3 {
+.modal-titulo {
   font-size: 1.5rem;
   margin-bottom: 20px;
   color: #3ded97;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
 }
 
 .detalle-cuenta {
   text-align: left;
   margin-bottom: 30px;
+  background: rgba(15, 23, 42, 0.5);
+  padding: 20px;
+  border-radius: 10px;
+  border: 1px solid rgba(61, 237, 151, 0.1);
 }
 
 .detalle-item {
   display: flex;
   justify-content: space-between;
   padding: 10px 0;
-  border-bottom: 1px solid #333;
+  border-bottom: 1px solid rgba(61, 237, 151, 0.1);
+}
+
+.detalle-item:last-child {
+  border-bottom: none;
 }
 
 .detalle-etiqueta {
@@ -487,14 +515,59 @@ const volver = () => router.push('/');
 
 .detalle-valor {
   color: #fff;
+  text-align: right;
+}
+
+.modal-footer {
+  display: flex;
+  justify-content: center;
+  margin-top: 20px;
+}
+
+.btn-accion {
+  background: linear-gradient(135deg, #3ded97, #2a9d8f);
+  color: #fff;
+  padding: 12px 25px;
+  border: none;
+  border-radius: 50px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.btn-accion:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 5px 15px rgba(61, 237, 151, 0.4);
 }
 
 .footer {
-  margin-top: auto;
-  padding: 30px 0;
+  margin-top: 50px;
+  padding: 20px 0;
   font-size: 0.9rem;
-  color: #888;
+  color: #6b7280;
   text-align: center;
+  position: relative;
+  width: 100%;
+}
+
+.footer::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 200px;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(61, 237, 151, 0.5), transparent);
+}
+
+@media (max-width: 992px) {
+  .filtros-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
 }
 
 @media (max-width: 768px) {
@@ -507,10 +580,39 @@ const volver = () => router.push('/');
     gap: 5px;
   }
   
+  .detalle-valor {
+    text-align: left;
+  }
+  
   .tabla-cuentas th,
   .tabla-cuentas td {
     padding: 10px 5px;
     font-size: 0.9rem;
+  }
+  
+  .hero {
+    padding: 40px 20px 30px;
+  }
+  
+  .titulo {
+    font-size: 2rem;
+  }
+  
+  .descripcion {
+    font-size: 1rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .back-button {
+    top: 10px;
+    left: 10px;
+    padding: 5px 10px;
+    font-size: 0.9rem;
+  }
+  
+  .modal-contenido {
+    padding: 20px 15px;
   }
 }
 </style>

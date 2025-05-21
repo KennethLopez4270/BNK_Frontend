@@ -1,30 +1,30 @@
 <template>
-  <div class="gestor-cuentas">
+  <div class="transferencias-app">
     <section class="hero animate__animated animate__fadeIn">
-      <h1 class="titulo">Gestión de Cuentas</h1>
+      <h1 class="titulo">Transferencias Bancarias</h1>
       <p class="descripcion">
-        Administra las cuentas de tus clientes de forma rápida y sencilla
+        Realiza operaciones financieras de forma rápida y segura
       </p>
     </section>
 
     <section class="botones-grid">
       <div 
-        v-for="(boton, index) in botones" 
-        :key="boton.label" 
+        v-for="(item, index) in opciones" 
+        :key="item.titulo" 
         class="card-accion animate__animated animate__fadeInUp"
         :style="`animation-delay: ${index * 0.1}s`"
-        @click="boton.action"
+        @click="navigateTo(item.ruta)"
         @mouseenter="hoverCard(index)"
         @mouseleave="hoverCard(null)"
       >
         <div class="icono-wrapper">
-          <div class="icono" :class="`bg-${boton.color}`">
-            <i :class="`bi ${boton.icon}`"></i>
+          <div class="icono" :class="`bg-${colors[index]}`">
+            <i :class="`bi ${item.icono}`"></i>
           </div>
-          <div class="glow" :class="`glow-${boton.color}`"></div>
+          <div class="glow" :class="`glow-${colors[index]}`"></div>
         </div>
-        <h3>{{ boton.label }}</h3>
-        <p class="descripcion-card">{{ boton.descripcion }}</p>
+        <h3>{{ item.titulo }}</h3>
+        <p class="descripcion-card">{{ item.descripcion }}</p>
         <button class="btn-accion">
           <i class="bi bi-arrow-right"></i>
         </button>
@@ -32,7 +32,7 @@
     </section>
 
     <footer class="footer animate__animated animate__fadeIn">
-      © 2025 Gestión Premium. Todos los derechos reservados.
+      © 2025 Banco Digital. Todos los derechos reservados.
     </footer>
   </div>
 </template>
@@ -43,57 +43,38 @@ import 'animate.css'
 
 const router = useRouter()
 
-const irACrear = () => router.push('/crear-cuenta')
-const irAEliminar = () => router.push('/eliminar-cuentas')
-const irAActualizar = () => router.push('/actualizar-cuenta')
-const irAObtener = () => router.push('/obtener-cuentas')
-const irADepositar = () => router.push('/depositar')
-const irAExtraer = () => router.push('/extraer')
+const colors = ['blue', 'purple', 'pink', 'green']
 
-const botones = [
-  { 
-    label: 'Crear Cuenta', 
-    icon: 'bi-plus-circle', 
-    color: 'blue', 
-    action: irACrear,
-    descripcion: 'Abre nuevas cuentas para clientes'
+const opciones = [
+  {
+    titulo: 'Mis Cuentas',
+    descripcion: 'Transfiere entre tus propias cuentas',
+    ruta: '/transferir-propias',
+    icono: 'bi-arrow-left-right'
   },
-  { 
-    label: 'Eliminar Cuenta', 
-    icon: 'bi-trash', 
-    color: 'pink', 
-    action: irAEliminar,
-    descripcion: 'Cierra cuentas existentes'
+  {
+    titulo: 'A Terceros',
+    descripcion: 'Envía dinero a otros clientes',
+    ruta: '/transferir-terceros',
+    icono: 'bi-people'
   },
-  { 
-    label: 'Actualizar Cuenta', 
-    icon: 'bi-pencil-square', 
-    color: 'purple', 
-    action: irAActualizar,
-    descripcion: 'Modifica información de cuentas'
+  {
+    titulo: 'Otros Bancos',
+    descripcion: 'Transferencias interbancarias',
+    ruta: '/transferir-otro-banco',
+    icono: 'bi-bank'
   },
-  { 
-    label: 'Obtener Cuentas', 
-    icon: 'bi-list-check', 
-    color: 'green', 
-    action: irAObtener,
-    descripcion: 'Consulta el listado de cuentas'
-  },
-  { 
-    label: 'Depositar', 
-    icon: 'bi-box-arrow-in-down', 
-    color: 'blue', 
-    action: irADepositar,
-    descripcion: 'Ingresa fondos a una cuenta'
-  },
-  { 
-    label: 'Extraer', 
-    icon: 'bi-box-arrow-up', 
-    color: 'pink', 
-    action: irAExtraer,
-    descripcion: 'Retira fondos de una cuenta'
+  {
+    titulo: 'Historial',
+    descripcion: 'Consulta tus movimientos',
+    ruta: '/historial-transferencias',
+    icono: 'bi-clock-history'
   }
 ]
+
+const navigateTo = (route) => {
+  router.push(route)
+}
 
 const hoverCard = (index) => {
   // Efecto adicional al hacer hover
@@ -103,7 +84,7 @@ const hoverCard = (index) => {
 <style scoped>
 @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
 
-.gestor-cuentas {
+.transferencias-app {
   font-family: 'Poppins', sans-serif;
   color: #fff;
   background: linear-gradient(135deg, #0f2027, #203a43, #2c5364);
@@ -279,11 +260,6 @@ const hoverCard = (index) => {
 .glow-pink { background-color: #f72585; }
 .glow-green { background-color: #4cc9f0; }
 
-.bg-blue { background-color: #4361ee; }
-.bg-purple { background-color: #7b2cbf; }
-.bg-pink { background-color: #f72585; }
-.bg-green { background-color: #4cc9f0; }
-
 .card-accion:hover .icono {
   transform: scale(1.1) rotate(5deg);
 }
@@ -363,7 +339,21 @@ const hoverCard = (index) => {
   height: 1px;
   background: linear-gradient(90deg, transparent, rgba(61, 237, 151, 0.5), transparent);
 }
-
+@keyframes float {
+  0% {
+    transform: translateY(0) rotate(0deg);
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(-1000px) rotate(720deg);
+    opacity: 0;
+  }
+}
+@keyframes pulse {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.05); }
+  100% { transform: scale(1); }
+}
 @media (max-width: 768px) {
   .botones-grid {
     grid-template-columns: 1fr 1fr;
