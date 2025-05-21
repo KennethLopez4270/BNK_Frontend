@@ -51,7 +51,7 @@ const props = defineProps({
     { path: '/historial-transferencias', title: 'Historial', icon: 'bi-clock-history' },
     { path: '/transferir-otro-banco', title: 'A otro banco', icon: 'bi-bank' },
     { path: '/transferir-terceros', title: 'A terceros', icon: 'bi-person-lines-fill' },
-    { path: '/transferir-propias', title: 'Entre propias', icon: 'bi-arrow-left-right' }
+    { path: '/transferir-propias', title: 'Entre propias', icon: 'bi-arrow-left-right' },
     ]
   }
 });

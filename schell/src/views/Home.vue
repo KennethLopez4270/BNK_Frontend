@@ -1,7 +1,7 @@
 <template>
   <div class="home-app">
     <section class="hero animate__animated animate__fadeIn">
-      <h1 class="titulo">Bienvenido al Banco Digital</h1>
+      <h1 class="titulo">Bienvenido a Banco Chuno</h1>
       <p class="descripcion">
         Selecciona tu tipo de acceso para continuar
       </p>
@@ -61,8 +61,8 @@ import 'animate.css'
 
 const router = useRouter()
 
-const irACliente = () => router.push('/cliente')
-const irAFuncionario = () => router.push('/funcionario')
+const irACliente = () => router.push('/login-cliente')
+const irAFuncionario = () => router.push('/login-funcionario')
 
 const hoverCard = (index) => {
   // Efecto adicional al hacer hover (opcional)

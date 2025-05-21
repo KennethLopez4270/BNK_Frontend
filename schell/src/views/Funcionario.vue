@@ -3,12 +3,9 @@
     <!-- Navbar -->
     <nav class="navbar">
       <h2 class="logo" @click="irAHomePrincipal" style="cursor: pointer;">
-        Startup Chuno
+        Banco Chuno
       </h2>
       <div class="nav-links">
-        <button class="nav-btn" @click="irAHomePrincipal()">
-          <i class="bi bi-house"></i> Home
-        </button>
         <button class="nav-btn" @click="load('http://localhost:5174')">
           <i class="bi bi-credit-card"></i> Gestión Clientes
         </button>
