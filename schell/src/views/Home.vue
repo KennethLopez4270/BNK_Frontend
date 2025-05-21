@@ -1,58 +1,50 @@
 <template>
-  <div class="banco-app">
+  <div class="home-app">
     <section class="hero animate__animated animate__fadeIn">
-      <h1 class="titulo">Banco Digital</h1>
+      <h1 class="titulo">Bienvenido a Banco Chuno</h1>
       <p class="descripcion">
-        Gestiona tus productos bancarios de forma rápida y segura
+        Selecciona tu tipo de acceso para continuar
       </p>
     </section>
 
     <section class="botones-container">
-      <div class="botones-grid">
-        <!-- Primera fila con 3 botones -->
-        <div class="fila primera-fila">
-          <div 
-            v-for="(boton, index) in botones.slice(0, 3)" 
-            :key="boton.label" 
-            class="card-accion animate__animated animate__fadeInUp"
-            :style="`animation-delay: ${index * 0.1}s`"
-            @click="boton.action"
-          >
-            <div class="icono-wrapper">
-              <div class="icono" :class="`bg-${colors[index]}`">
-                <i :class="`bi ${boton.icon}`"></i>
-              </div>
-              <div class="glow" :class="`glow-${colors[index]}`"></div>
+      <div class="botones-wrapper animate__animated animate__fadeInUp">
+        <div 
+          class="card-acceso"
+          @click="irACliente"
+          @mouseenter="hoverCard(0)"
+          @mouseleave="hoverCard(null)"
+        >
+          <div class="icono-wrapper">
+            <div class="icono bg-blue">
+              <i class="bi bi-person"></i>
             </div>
-            <h3>{{ boton.label }}</h3>
-            <p class="descripcion-card">{{ boton.descripcion }}</p>
-            <button class="btn-accion">
-              <i class="bi bi-arrow-right"></i>
-            </button>
+            <div class="glow glow-blue"></div>
           </div>
+          <h3>Acceso Cliente</h3>
+          <p class="descripcion-card">Accede a tu banca online personal</p>
+          <button class="btn-accion">
+            <i class="bi bi-arrow-right"></i>
+          </button>
         </div>
-        
-        <!-- Segunda fila con 2 botones centrados -->
-        <div class="fila segunda-fila">
-          <div 
-            v-for="(boton, index) in botones.slice(3, 5)" 
-            :key="boton.label" 
-            class="card-accion animate__animated animate__fadeInUp"
-            :style="`animation-delay: ${(index + 3) * 0.1}s`"
-            @click="boton.action"
-          >
-            <div class="icono-wrapper">
-              <div class="icono" :class="`bg-${colors[index + 3]}`">
-                <i :class="`bi ${boton.icon}`"></i>
-              </div>
-              <div class="glow" :class="`glow-${colors[index + 3]}`"></div>
+
+        <div 
+          class="card-acceso"
+          @click="irAFuncionario"
+          @mouseenter="hoverCard(1)"
+          @mouseleave="hoverCard(null)"
+        >
+          <div class="icono-wrapper">
+            <div class="icono bg-green">
+              <i class="bi bi-person-gear"></i>
             </div>
-            <h3>{{ boton.label }}</h3>
-            <p class="descripcion-card">{{ boton.descripcion }}</p>
-            <button class="btn-accion">
-              <i class="bi bi-arrow-right"></i>
-            </button>
+            <div class="glow glow-green"></div>
           </div>
+          <h3>Acceso Funcionario</h3>
+          <p class="descripcion-card">Área administrativa del banco</p>
+          <button class="btn-accion">
+            <i class="bi bi-arrow-right"></i>
+          </button>
         </div>
       </div>
     </section>
@@ -69,46 +61,18 @@ import 'animate.css'
 
 const router = useRouter()
 
-const colors = ['blue', 'purple', 'pink', 'green', 'orange']
+const irACliente = () => router.push('/login-cliente')
+const irAFuncionario = () => router.push('/login-funcionario')
 
-const botones = [
-  { 
-    label: 'Clientes', 
-    descripcion: 'Gestión de clientes y perfiles', 
-    icon: 'bi-people-fill', 
-    action: () => router.push('/clientes') 
-  },
-  { 
-    label: 'Cuentas', 
-    descripcion: 'Administración de cuentas bancarias', 
-    icon: 'bi-bank2', 
-    action: () => router.push('/cuentas') 
-  },
-  { 
-    label: 'Pagos', 
-    descripcion: 'Realiza y gestiona tus pagos', 
-    icon: 'bi-credit-card-fill', 
-    action: () => router.push('/pagos') 
-  },
-  { 
-    label: 'Transferencias', 
-    descripcion: 'Transferencias entre cuentas', 
-    icon: 'bi-arrow-left-right', 
-    action: () => router.push('/transferencias') 
-  },
-  { 
-    label: 'Préstamos', 
-    descripcion: 'Solicitud y gestión de préstamos', 
-    icon: 'bi-cash-stack', 
-    action: () => router.push('/prestamos') 
-  }
-]
+const hoverCard = (index) => {
+  // Efecto adicional al hacer hover (opcional)
+}
 </script>
 
 <style scoped>
 @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
 
-.banco-app {
+.home-app {
   font-family: 'Poppins', sans-serif;
   color: #fff;
   background: linear-gradient(135deg, #0f2027, #203a43, #2c5364);
@@ -124,8 +88,6 @@ const botones = [
   padding: 80px 20px 50px;
   text-align: center;
   position: relative;
-  width: 100%;
-  max-width: 1200px;
 }
 
 .hero::after {
@@ -140,10 +102,11 @@ const botones = [
 }
 
 .titulo {
-  font-size: clamp(1.8rem, 5vw, 2.8rem);
+  font-size: 2.5rem;
   font-weight: 800;
   background: linear-gradient(to right, #3ded97, #2fa8f8);
   -webkit-background-clip: text;
+  background-clip: text; 
   -webkit-text-fill-color: transparent;
   margin-bottom: 15px;
   text-shadow: 0 0 20px rgba(61, 237, 151, 0.3);
@@ -151,62 +114,42 @@ const botones = [
 }
 
 .descripcion {
-  font-size: clamp(1.1rem, 2.5vw, 1.3rem);
+  font-size: 1.3rem;
   color: #a0a8c0;
   max-width: 600px;
   margin: 0 auto;
   line-height: 1.6;
 }
 
-/* Contenedor principal de botones */
 .botones-container {
   width: 100%;
-  max-width: 1100px;
-  padding: 50px 20px;
-  position: relative;
-  z-index: 1;
-}
-
-/* Estructura de filas */
-.fila {
   display: flex;
   justify-content: center;
-  gap: 30px;
-  margin-bottom: 30px;
-  flex-wrap: wrap;
+  padding: 50px 20px;
 }
 
-.primera-fila {
-  justify-content: space-between;
+.botones-wrapper {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 40px;
+  max-width: 600px;
+  width: 100%;
 }
 
-.segunda-fila {
-  justify-content: center;
-}
-
-/* Estilos de las tarjetas */
-.card-accion {
+.card-acceso {
   background: rgba(15, 23, 42, 0.7);
   backdrop-filter: blur(10px);
   border-radius: 20px;
-  padding: 30px 20px;
+  padding: 35px 25px;
   text-align: center;
   cursor: pointer;
   transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
   border: 1px solid rgba(61, 237, 151, 0.1);
   position: relative;
   overflow: hidden;
-  will-change: transform;
-  width: 100%;
-  max-width: 320px;
-  min-width: 250px;
-  min-height: 300px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
 }
 
-.card-accion::before {
+.card-acceso::before {
   content: '';
   position: absolute;
   top: -50%;
@@ -218,17 +161,17 @@ const botones = [
   transition: opacity 0.4s;
 }
 
-.card-accion:hover {
+.card-acceso:hover {
   transform: translateY(-10px) scale(1.03);
   box-shadow: 0 15px 30px rgba(61, 237, 151, 0.15);
   border-color: rgba(61, 237, 151, 0.3);
 }
 
-.card-accion:hover::before {
+.card-acceso:hover::before {
   opacity: 1;
 }
 
-.card-accion h3 {
+.card-acceso h3 {
   margin: 25px 0 15px;
   color: #fff;
   font-size: 1.3rem;
@@ -237,7 +180,7 @@ const botones = [
   display: inline-block;
 }
 
-.card-accion h3::after {
+.card-acceso h3::after {
   content: '';
   position: absolute;
   bottom: -5px;
@@ -250,7 +193,7 @@ const botones = [
   transition: all 0.3s;
 }
 
-.card-accion:hover h3::after {
+.card-acceso:hover h3::after {
   width: 50px;
   opacity: 1;
 }
@@ -259,15 +202,12 @@ const botones = [
   color: #a0a8c0;
   font-size: 0.95rem;
   margin-bottom: 25px;
+  min-height: 40px;
   line-height: 1.6;
   transition: color 0.3s;
-  flex-grow: 1;
-  display: flex;
-  align-items: center;
-  padding: 0 10px;
 }
 
-.card-accion:hover .descripcion-card {
+.card-acceso:hover .descripcion-card {
   color: #d1d9f0;
 }
 
@@ -289,17 +229,20 @@ const botones = [
   position: relative;
   z-index: 2;
   transition: all 0.4s;
+  border: none; /* Elimina cualquier borde */
+  box-shadow: none; /* Elimina sombras internas */
+  background: transparent !important; /* Fondo transparente */
+}
+
+.icono i :hover{
+  color: white;
+  text-shadow: 0 0 10px currentColor; /* Brillo al ícono */
+  position: relative;
+  z-index: 3;
 }
 
 .bg-blue { background-color: #4361ee; }
-.bg-purple { background-color: #7b2cbf; }
-.bg-pink { background-color: #f72585; }
 .bg-green { background-color: #4cc9f0; }
-.bg-orange { background-color: #f8961e; }
-
-.icono i {
-  color: white;
-}
 
 .glow {
   position: absolute;
@@ -314,16 +257,13 @@ const botones = [
 }
 
 .glow-blue { background-color: #4361ee; }
-.glow-purple { background-color: #7b2cbf; }
-.glow-pink { background-color: #f72585; }
 .glow-green { background-color: #4cc9f0; }
-.glow-orange { background-color: #f8961e; }
 
-.card-accion:hover .icono {
+.card-acceso:hover .icono {
   transform: scale(1.1) rotate(5deg);
 }
 
-.card-accion:hover .glow {
+.card-acceso:hover .glow {
   transform: scale(1.2);
   opacity: 0.9;
 }
@@ -399,43 +339,28 @@ const botones = [
   background: linear-gradient(90deg, transparent, rgba(61, 237, 151, 0.5), transparent);
 }
 
-/* Responsive Design */
-@media (max-width: 900px) {
-  .primera-fila {
-    justify-content: center;
+@media (max-width: 768px) {
+  .botones-wrapper {
+    grid-template-columns: 1fr;
+    max-width: 400px;
   }
   
-  .card-accion {
-    max-width: 280px;
+  .titulo {
+    font-size: 2.2rem;
   }
 }
 
-@media (max-width: 600px) {
-  .hero {
-    padding: 60px 20px 40px;
-  }
-  
-  .botones-container {
-    padding: 30px 20px;
-  }
-  
-  .fila {
-    gap: 20px;
-    margin-bottom: 20px;
-  }
-  
-  .card-accion {
-    min-width: 100%;
-    max-width: 100%;
-    padding: 25px 15px;
-  }
-  
+@media (max-width: 480px) {
   .titulo {
     font-size: 1.8rem;
   }
   
   .descripcion {
-    font-size: 1rem;
+    font-size: 1.1rem;
+  }
+  
+  .card-acceso {
+    padding: 25px 20px;
   }
 }
 </style>

@@ -155,6 +155,7 @@ const submitForm = async () => {
 };
 
 const cancelar = () => {
+  console.log('Operación cancelada');
   router.push('/');
 };
 </script>
@@ -259,7 +260,7 @@ const cancelar = () => {
   border: 1px solid rgba(61, 237, 151, 0.3);
   border-radius: 10px;
   background-color: rgba(255, 255, 255, 0.05);
-  color: #fff;
+  color: #0f2027;
   font-size: 1rem;
   transition: all 0.3s;
 }
