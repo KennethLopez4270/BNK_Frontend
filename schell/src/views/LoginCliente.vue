@@ -127,7 +127,7 @@ function pulseAnimation(event) {
 function submitLogin() {
   // Verificación para funcionario
   if (email.value === 'cliente@gmail.com' && password.value === 'Password123!') {
-    router.push('/funcionario')
+    router.push('/cliente')
     return
   }
 

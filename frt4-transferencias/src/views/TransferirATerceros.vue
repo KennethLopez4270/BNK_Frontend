@@ -1,9 +1,5 @@
 <template>
   <div class="transferencias-app">
-    <!-- Botón de volver -->
-    <button @click="volver" class="back-button animate__animated animate__fadeIn">
-      <i class="bi bi-arrow-left"></i> Volver
-    </button>
 
     <section class="hero">
       <h1 class="titulo">Transferencia a terceros</h1>

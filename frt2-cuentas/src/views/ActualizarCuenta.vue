@@ -1,8 +1,5 @@
 <template>
   <div class="actualizar-cuenta">
-    <button @click="volver" class="back-button animate__animated animate__fadeIn">
-      <i class="bi bi-arrow-left"></i> Volver
-    </button>
     
     <section class="hero animate__animated animate__fadeIn">
       <h1 class="titulo">Actualizar Cuenta</h1>

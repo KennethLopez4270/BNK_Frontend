@@ -1,10 +1,5 @@
 <template>
   <div class="transferencias-app">
-    <!-- Botón de volver -->
-    <button @click="volver" class="back-button animate__animated animate__fadeIn">
-      <i class="bi bi-arrow-left"></i> Volver
-    </button>
-
     <section class="hero animate__animated animate__fadeIn">
       <h1 class="titulo">Transferencia entre mis cuentas</h1>
       <p class="descripcion">

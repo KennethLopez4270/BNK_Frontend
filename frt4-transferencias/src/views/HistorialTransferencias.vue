@@ -1,13 +1,5 @@
 <template>
   <div class="transferencias-app">
-    <button 
-      @click="volver" 
-      class="back-button animate__animated animate__fadeIn" 
-      @mousedown="pulseAnimation"
-      style="animation-delay: 0.1s"
-    >
-      <i class="bi bi-arrow-left"></i> Volver
-    </button>
     <section class="hero animate__animated animate__fadeIn">
       <h1 class="titulo animate__animated animate__fadeInDown" style="animation-delay: 0.2s">
         Historial de Transferencias
