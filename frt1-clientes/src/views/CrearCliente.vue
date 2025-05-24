@@ -217,6 +217,7 @@ const cancelar = () => {
   width: 100%;
   max-width: 800px;
   margin: 30px 0;
+  
 }
 
 .formulario {
@@ -260,7 +261,7 @@ const cancelar = () => {
   border: 1px solid rgba(61, 237, 151, 0.3);
   border-radius: 10px;
   background-color: rgba(255, 255, 255, 0.05);
-  color: #0f2027;
+  color: #fff;
   font-size: 1rem;
   transition: all 0.3s;
 }

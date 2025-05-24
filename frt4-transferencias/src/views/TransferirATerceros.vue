@@ -108,14 +108,6 @@
               Transferir <i class="bi bi-send"></i>
             </button>
 
-            <button
-              v-if="formValido"
-              @click="generarComprobante"
-              type="button"
-              class="btn-comprobante"
-            >
-              Comprobante <i class="bi bi-receipt"></i>
-            </button>
           </div>
         </form>
       </div>
