@@ -41,9 +41,11 @@
           <div class="form-grupo animate__animated animate__fadeIn" style="animation-delay: 0.3s">
             <label class="form-label">Tipo de Cuenta</label>
             <div class="input-group">
-              <select v-model="form.accountType" class="form-control">
+              <select v-model="form.accountType" class="form-control" required >
+                <option value="" disabled>Seleccionar...</option>
                 <option value="ahorro">Ahorro</option>
                 <option value="corriente">Corriente</option>
+                <option value="checking">Checking</option>
               </select>
             </div>
           </div>
@@ -130,7 +132,7 @@ const router = useRouter();
 const form = ref({
   clientId: '',
   accountNumber: '',
-  accountType: 'ahorro',
+  accountType: '',
   balance: 0,
   status: 'activo',
 });
@@ -191,6 +193,17 @@ const volver = () => {
 
 <style scoped>
 @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
+
+input[type="number"]::-webkit-outer-spin-button,
+input[type="number"]::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+/* Firefox */
+input[type="number"] {
+  -moz-appearance: textfield;
+}
 
 .crear-cuenta {
   font-family: 'Poppins', sans-serif;
@@ -320,10 +333,12 @@ const volver = () => {
 .input-group-text {
   padding: 0 15px;
   background: rgba(255, 255, 255, 0.2);
-  color: #fff;
+  color: #3ded97;
   height: 50px;
   display: flex;
   align-items: center;
+  border-radius: 12px 0px 0px 12px;
+  border-color: #3ded97;
 }
 
 .form-control {
@@ -339,6 +354,12 @@ const volver = () => {
 .form-control:focus {
   outline: none;
   box-shadow: 0 0 0 2px rgba(61, 237, 151, 0.3);
+  background-color: transparent;
+  color: #dee2ee;
+}
+
+.form-control::placeholder{
+  color: #a4a7ae;
 }
 
 select.form-control {
@@ -348,6 +369,16 @@ select.form-control {
   background-position: right 15px center;
   background-size: 20px;
 }
+
+select.form-control option{
+
+  background: #1e293b; /* Color de fondo */
+  color: #a0a8c0; /* Color del texto */
+  padding: 30px 20px; /* Espaciado interno */
+  font-size: 1rem;
+
+}
+/* 1e293b */
 
 .botones-form {
   display: flex;

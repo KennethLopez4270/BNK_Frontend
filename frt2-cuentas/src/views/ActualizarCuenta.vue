@@ -53,6 +53,67 @@
       </div>
     </section>
 
+    <!-- Formulario de edición -->
+    <section v-if="cuentaSeleccionada" class="formulario-edicion animate__animated animate__fadeInUp">
+      <div class="formulario-container">
+        <h2 class="subtitulo">
+          <i class="bi bi-pencil-square"></i> Editar Cuenta {{ cuentaSeleccionada.accountNumber }}
+        </h2>
+
+        <form @submit.prevent="guardarCambios" class="form-editar">
+          <div class="form-columnas">
+            <div class="form-grupo animate__animated animate__fadeIn" style="animation-delay: 0.1s">
+              <label class="form-label"><i class="bi bi-wallet2"></i> Tipo de Cuenta</label>
+              <div class="input-group">
+                <select v-model="cuentaSeleccionada.accountType" class="form-control">
+                  <option value="ahorro">Ahorro</option>
+                  <option value="corriente">Corriente</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="form-grupo animate__animated animate__fadeIn" style="animation-delay: 0.2s">
+              <label class="form-label"><i class="bi bi-cash-coin"></i> Saldo</label>
+              <div class="input-group">
+                <span class="input-group-text">$</span>
+                <input
+                  type="number"
+                  v-model="cuentaSeleccionada.balance"
+                  min="0"
+                  step="0.01"
+                  class="form-control"
+                />
+              </div>
+            </div>
+          </div>
+
+          <div class="form-grupo animate__animated animate__fadeIn" style="animation-delay: 0.3s">
+            <label class="form-label"><i class="bi bi-power"></i> Estado</label>
+            <div class="input-group">
+              <select v-model="cuentaSeleccionada.status" class="form-control">
+                <option value="activo">Activo</option>
+                <option value="inactivo">Inactivo</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="botones-form animate__animated animate__fadeIn" style="animation-delay: 0.4s">
+            <button type="submit" class="btn-guardar" :disabled="loading">
+              <i class="bi bi-check-circle"></i> {{ loading ? 'Guardando...' : 'Guardar Cambios' }}
+            </button>
+            <button
+              type="button"
+              @click="confirmarEliminacion"
+              class="btn-eliminar"
+              :disabled="loading"
+            >
+              <i class="bi bi-trash"></i> Eliminar Cuenta
+            </button>
+          </div>
+        </form>
+      </div>
+    </section>
+
     <!-- Mensaje de carga o error -->
     <div v-if="loading" class="cargando animate__animated animate__fadeIn">
       <div class="spinner"></div>
@@ -121,66 +182,7 @@
       </div>
     </section>
 
-    <!-- Formulario de edición -->
-    <section v-if="cuentaSeleccionada" class="formulario-edicion animate__animated animate__fadeInUp">
-      <div class="formulario-container">
-        <h2 class="subtitulo">
-          <i class="bi bi-pencil-square"></i> Editar Cuenta {{ cuentaSeleccionada.accountNumber }}
-        </h2>
-
-        <form @submit.prevent="guardarCambios" class="form-editar">
-          <div class="form-columnas">
-            <div class="form-grupo animate__animated animate__fadeIn" style="animation-delay: 0.1s">
-              <label class="form-label"><i class="bi bi-wallet2"></i> Tipo de Cuenta</label>
-              <div class="input-group">
-                <select v-model="cuentaSeleccionada.accountType" class="form-control">
-                  <option value="ahorro">Ahorro</option>
-                  <option value="corriente">Corriente</option>
-                </select>
-              </div>
-            </div>
-
-            <div class="form-grupo animate__animated animate__fadeIn" style="animation-delay: 0.2s">
-              <label class="form-label"><i class="bi bi-cash-coin"></i> Saldo</label>
-              <div class="input-group">
-                <span class="input-group-text">$</span>
-                <input
-                  type="number"
-                  v-model="cuentaSeleccionada.balance"
-                  min="0"
-                  step="0.01"
-                  class="form-control"
-                />
-              </div>
-            </div>
-          </div>
-
-          <div class="form-grupo animate__animated animate__fadeIn" style="animation-delay: 0.3s">
-            <label class="form-label"><i class="bi bi-power"></i> Estado</label>
-            <div class="input-group">
-              <select v-model="cuentaSeleccionada.status" class="form-control">
-                <option value="activo">Activo</option>
-                <option value="inactivo">Inactivo</option>
-              </select>
-            </div>
-          </div>
-
-          <div class="botones-form animate__animated animate__fadeIn" style="animation-delay: 0.4s">
-            <button type="submit" class="btn-guardar" :disabled="loading">
-              <i class="bi bi-check-circle"></i> {{ loading ? 'Guardando...' : 'Guardar Cambios' }}
-            </button>
-            <button
-              type="button"
-              @click="confirmarEliminacion"
-              class="btn-eliminar"
-              :disabled="loading"
-            >
-              <i class="bi bi-trash"></i> Eliminar Cuenta
-            </button>
-          </div>
-        </form>
-      </div>
-    </section>
+    
 
     <!-- Modales -->
     <div v-if="mostrarModalExito" class="modal-overlay" @click="mostrarModalExito = false">
@@ -525,6 +527,8 @@ const volver = () => router.push('/');
   align-items: center;
   justify-content: center;
   font-size: 1.1rem;
+  border-radius: 10px 0px 0px 10px;
+  border-color: #3ded97;
 }
 
 .form-control {

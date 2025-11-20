@@ -37,6 +37,7 @@
               <option value="">Todos los tipos</option>
               <option value="ahorro">Ahorro</option>
               <option value="corriente">Corriente</option>
+              <option value="checking">Checking</option>
             </select>
           </div>
           
@@ -375,7 +376,8 @@ select.form-control {
 }
 
 .tabla-scroll {
-  overflow-x: auto;
+  overflow-x: hidden;
+  overflow-y: hidden;
 }
 
 .tabla-cuentas {

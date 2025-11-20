@@ -17,7 +17,7 @@
             <input
               v-model="filtros.accountNumber"
               type="text"
-              class="form-control"
+              class="form-control input-filtros"
               placeholder="N° de cuenta"
             />
           </div>
@@ -158,7 +158,7 @@
     </div>
 
     <div v-if="mostrarModalError" class="modal-overlay" @click="mostrarModalError = false">
-      <div class="modal-contenido modal-error animate__animated animate__zoomIn" @click.stop>
+      <div class="modal-contenido modal-error animate__animated animate__zoomIn " @click.stop>
         <div class="modal-icono-error">
           <i class="bi bi-x-circle"></i>
         </div>
@@ -266,11 +266,16 @@ const confirmar = (cuenta) => {
   mostrarModalConfirmar.value = true;
 };
 
+
+// eliminar cuenta
 const eliminarCuenta = async () => {
   try {
     loading.value = true;
     error.value = null;
-    const response = await fetch(`http://localhost:8080/api/accounts/${cuentaSeleccionada.value.id}`, {
+
+    const accountNum = cuentaSeleccionada.value.accountNumber;
+
+    const response = await fetch(`http://localhost:8082/api/accounts/${cuentaSeleccionada.value.accountNumber}`, {
       method: 'DELETE',
       headers: {
         'Origin': 'http://localhost:5173',
@@ -282,7 +287,7 @@ const eliminarCuenta = async () => {
       throw new Error(errorData.message || `Error ${response.status}`);
     }
 
-    cuentas.value = cuentas.value.filter((c) => c.id !== cuentaSeleccionada.value.id);
+    cuentas.value = cuentas.value.filter((c) => c.accountNumber !== accountNum);
     mostrarModalConfirmar.value = false;
     mostrarModalExito.value = true;
     cuentaSeleccionada.value = null;
@@ -422,6 +427,8 @@ const volver = () => router.push('/');
   align-items: center;
   justify-content: center;
   font-size: 1.1rem;
+  border-color: #e04444;
+  border-radius: 10px 0px 0px 10px;
 }
 
 .form-control {
@@ -430,14 +437,22 @@ const volver = () => router.push('/');
   padding: 0 15px;
   background: transparent;
   border: none;
-  color: #fff;
+  color: #a0a8c0;
   font-size: 1rem;
 }
 
 .form-control:focus {
   outline: none;
   box-shadow: 0 0 0 2px rgba(255, 77, 77, 0.3);
+  color: #a0a8c0;
+  background-color: transparent;
 }
+.form-control::placeholder {
+  
+  color: #a0a8c0;
+  opacity: 0.8;
+}
+
 
 select.form-control {
   appearance: none;
@@ -445,6 +460,29 @@ select.form-control {
   background-repeat: no-repeat;
   background-position: right 15px center;
   background-size: 20px;
+  transition: all 0.3s ease;
+}
+
+select.form-control option {
+
+  background: #1e293b; /* Color de fondo */
+  color: #a0a8c0; /* Color del texto */
+  padding: 30px 20px; /* Espaciado interno */
+  font-size: 0.95rem; /* Tamaño de fuente */
+  font-family: 'Poppins', sans-serif; /* Fuente */
+}
+
+/* Opción seleccionada - ESTO SÍ FUNCIONA */
+select.form-control option:checked {
+  background: rgb(33, 33, 33) !important;
+  color: #a0a8c0 !important;
+  
+}
+
+/* Primera opción (placeholder) */
+select.form-control option[value=""] {
+  color: #a0a8c0;
+
 }
 
 .tabla-container {
@@ -460,7 +498,7 @@ select.form-control {
 }
 
 .tabla-scroll {
-  overflow-x: auto;
+  overflow-x: hidden;
   border-radius: 15px;
 }
 
@@ -792,6 +830,12 @@ select.form-control {
   .btn-accion, .btn-secundario, .btn-eliminar {
     padding: 8px 15px;
     font-size: 0.9rem;
+  }
+
+  .input-filtros{
+    background-color: #203a43;
+    font-style: normal;
+    color: #3ded97;
   }
 }
 </style>

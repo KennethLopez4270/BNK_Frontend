@@ -90,7 +90,7 @@ onMounted(() => {
   font-family: 'Poppins', sans-serif;
   background: linear-gradient(135deg, #0f2027, #203a43);
   color: #fff;
-  width: 250px;
+  width: 350px;
   height: 100vh;
   display: flex;
   flex-direction: column;
@@ -147,6 +147,7 @@ onMounted(() => {
   flex: 1;
   padding: 1rem 0;
   overflow-y: auto;
+  overflow-x: hidden;
 }
 
 .sidebar-nav ul {
