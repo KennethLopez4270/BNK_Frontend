@@ -108,6 +108,12 @@
           <div v-if="pagoMensual" class="resultado-calculo">
             <p><i class="bi bi-currency-dollar"></i> Pago mensual estimado: 
               <strong>${{ pagoMensual.toFixed(2) }}</strong>
+              <span v-if="mostrarComparativa" class="comparativa">
+                (Frontend: ${{ pagoMensual.toFixed(2) }} | Backend: ${{ pagoBackend.toFixed(2) }})
+              </span>
+            </p>
+            <p v-if="mostrarDiferencia" class="diferencia-calculoo">
+              ⚠️ Diferencia de cálculo: ${{ Math.abs(pagoMensual - pagoBackend).toFixed(2) }}
             </p>
           </div>
 
@@ -142,10 +148,13 @@ const form = ref({
   loan_amount: '',
   interest_rate: '',
   term_months: '',
-  start_date: new Date().toISOString().split('T')[0] // Fecha actual por defecto
+  start_date: new Date().toISOString().split('T')[0]
 })
 
 const pagoMensual = ref(0)
+const pagoBackend = ref(0)
+const mostrarComparativa = ref(false)
+const mostrarDiferencia = ref(false)
 const mensaje = ref('')
 const mensajeError = ref(false)
 const loading = ref(false)
@@ -158,15 +167,34 @@ const calcularPagoMensual = () => {
   }
 
   const principal = parseFloat(form.value.loan_amount)
-  const tasaMensual = parseFloat(form.value.interest_rate) / 100 / 12
+  const tasaAnual = parseFloat(form.value.interest_rate)
   const plazoMeses = parseInt(form.value.term_months)
 
-  // Fórmula de amortización
-  pagoMensual.value = (principal * tasaMensual) / 
-                      (1 - Math.pow(1 + tasaMensual, -plazoMeses))
+  // BUG INTENCIONAL: Fórmula incorrecta que produce diferencia con el backend
+  // En lugar de usar la fórmula estándar de amortización, usamos una simplificada incorrecta
   
-  mensaje.value = 'Cálculo realizado correctamente'
-  mensajeError.value = false
+  // Fórmula CORRECTA debería ser:
+  // const tasaMensual = tasaAnual / 100 / 12
+  // pagoMensual = (principal * tasaMensual) / (1 - Math.pow(1 + tasaMensual, -plazoMeses))
+  
+  // Fórmula INCORRECTA implementada (interés simple aproximado):
+  const interesTotal = principal * (tasaAnual / 100) * (plazoMeses / 12)
+  const totalPagar = principal + interesTotal
+  pagoMensual.value = totalPagar / plazoMeses
+
+  // Simular cálculo del backend (fórmula correcta)
+  const tasaMensualCorrecta = tasaAnual / 100 / 12
+  pagoBackend.value = (principal * tasaMensualCorrecta) / (1 - Math.pow(1 + tasaMensualCorrecta, -plazoMeses))
+
+  mostrarComparativa.value = true
+  mostrarDiferencia.value = true
+  
+
+
+  console.log('🔍 COMPARATIVA DE CÁLCULOS:')
+  console.log('Frontend (bug):', pagoMensual.value.toFixed(2))
+  console.log('Backend (correcto):', pagoBackend.value.toFixed(2))
+  console.log('Diferencia:', Math.abs(pagoMensual.value - pagoBackend.value).toFixed(2))
 }
 
 const calcularFechaFin = (startDate, months) => {
@@ -180,6 +208,8 @@ const solicitarPrestamo = async () => {
     loading.value = true
     mensaje.value = ''
     mensajeError.value = false
+    mostrarComparativa.value = false
+    mostrarDiferencia.value = false
 
     // Validación básica
     if (!form.value.client_id || !form.value.loan_amount || 
@@ -187,7 +217,11 @@ const solicitarPrestamo = async () => {
       throw new Error('Todos los campos son requeridos')
     }
 
-    // Calcular pago mensual si no se ha hecho
+    if (form.value.loan_amount <= 0) {
+      throw new Error('El monto del préstamo debe ser mayor a 0')
+    }
+
+    // Calcular pago mensual si no se ha hecho (con bug intencional)
     if (pagoMensual.value === 0) {
       calcularPagoMensual()
     }
@@ -197,11 +231,13 @@ const solicitarPrestamo = async () => {
       loanAmount: parseFloat(form.value.loan_amount),
       interestRate: parseFloat(form.value.interest_rate),
       termMonths: parseInt(form.value.term_months),
-      monthlyPayment: pagoMensual.value,
+      monthlyPayment: pagoMensual.value, // BUG: Enviamos cálculo incorrecto al backend
       startDate: form.value.start_date,
       endDate: calcularFechaFin(form.value.start_date, form.value.term_months),
       status: 'pendiente'
     }
+
+    console.log('🚨 ENVIANDO CÁLCULO CON BUG AL BACKEND:', payload.monthlyPayment)
 
     const response = await fetch('http://localhost:8085/api/loans', {
       method: 'POST',
@@ -217,7 +253,13 @@ const solicitarPrestamo = async () => {
     }
 
     const data = await response.json()
-    mensaje.value = `Préstamo creado exitosamente. ID: ${data.id}`
+    
+    // Mostrar advertencia del bug
+    mensaje.value = `Préstamo creado exitosamente. ID: ${data.id} - ¡PERO CON CÁLCULO INCORRECTO!`
+    console.warn('🚨 BUG CONFIRMADO: Préstamo creado con cálculo de frontend incorrecto')
+    console.warn('Cálculo frontend (incorrecto):', pagoMensual.value.toFixed(2))
+    console.warn('Cálculo backend (correcto):', pagoBackend.value.toFixed(2))
+    
     mensajeError.value = false
     
     // Resetear formulario
@@ -229,6 +271,7 @@ const solicitarPrestamo = async () => {
       start_date: new Date().toISOString().split('T')[0]
     }
     pagoMensual.value = 0
+    pagoBackend.value = 0
 
   } catch (err) {
     mensaje.value = err.message || 'Ocurrió un error al procesar la solicitud'
@@ -423,10 +466,6 @@ const volver = () => router.push('/')
   border-radius: 8px;
   border: 1px solid rgba(61, 237, 151, 0.3);
   margin-top: 20px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 10px;
 }
 
 .resultado-calculo p {
@@ -437,6 +476,23 @@ const volver = () => router.push('/')
 
 .resultado-calculo strong {
   color: #3ded97;
+}
+
+.comparativa {
+  font-size: 0.9rem;
+  color: #a0a8c0;
+  display: block;
+  margin-top: 5px;
+}
+
+.diferencia-calculoo {
+  color: #ff6b6b;
+  font-weight: bold;
+  margin-top: 10px;
+  padding: 8px;
+  background: rgba(255, 107, 107, 0.1);
+  border-radius: 5px;
+  border: 1px solid rgba(255, 107, 107, 0.3);
 }
 
 /* Estilos para mensajes */
@@ -509,6 +565,10 @@ const volver = () => router.push('/')
   .icono-input {
     font-size: 1rem;
     left: 12px;
+  }
+  
+  .comparativa {
+    font-size: 0.8rem;
   }
 }
 </style>
