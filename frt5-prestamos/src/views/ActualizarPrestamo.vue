@@ -25,11 +25,13 @@
       <i class="bi bi-arrow-repeat"></i> Cargando préstamos...
     </div>
     
+    <!-- Mostrar error pero continuar con la aplicación -->
     <div v-if="error" class="mensaje error">
       <i class="bi bi-exclamation-triangle"></i> {{ error }}
     </div>
 
-    <section v-else class="lista-container animate__animated animate__fadeInUp">
+    <!-- QUITAR el v-else para que siempre muestre la lista cuando hay datos -->
+    <section class="lista-container animate__animated animate__fadeInUp">
       <div v-if="prestamosFiltrados.length" class="lista-prestamos">
         <div 
           v-for="prestamo in prestamosFiltrados" 
@@ -63,7 +65,7 @@
         </div>
       </div>
 
-      <div v-else class="sin-resultados">
+      <div v-else-if="!loading" class="sin-resultados">
         <i class="bi bi-exclamation-circle"></i> No se encontraron préstamos con los filtros aplicados
       </div>
     </section>
@@ -189,7 +191,7 @@ import 'animate.css'
 const router = useRouter()
 const API_BASE = 'http://localhost:8085/api'
 
-// Datos estáticos en formato camelCase
+// Datos estáticos más completos en formato camelCase
 const datosEstaticos = [
   {
     id: 1,
@@ -212,6 +214,39 @@ const datosEstaticos = [
     startDate: '2023-02-15',
     endDate: '2025-02-15',
     status: 'ACTIVO'
+  },
+  {
+    id: 3,
+    clientId: 103,
+    loanAmount: 7500,
+    interestRate: 6.2,
+    termMonths: 18,
+    monthlyPayment: 438.25,
+    startDate: '2023-03-10',
+    endDate: '2024-09-10',
+    status: 'PENDIENTE'
+  },
+  {
+    id: 4,
+    clientId: 104,
+    loanAmount: 15000,
+    interestRate: 8.5,
+    termMonths: 36,
+    monthlyPayment: 473.82,
+    startDate: '2023-01-20',
+    endDate: '2025-12-20',
+    status: 'ACTIVO'
+  },
+  {
+    id: 5,
+    clientId: 105,
+    loanAmount: 3000,
+    interestRate: 4.5,
+    termMonths: 6,
+    monthlyPayment: 507.51,
+    startDate: '2023-04-05',
+    endDate: '2023-10-05',
+    status: 'PAGADO'
   }
 ]
 
@@ -223,6 +258,7 @@ const error = ref(null)
 const pagoMensual = ref(0)
 const mensaje = ref('')
 const mensajeError = ref(false)
+const usandoDatosFicticios = ref(false)
 
 const form = ref({
   loanAmount: 0,
@@ -240,6 +276,7 @@ const obtenerPrestamos = async () => {
   try {
     loading.value = true
     error.value = null
+    usandoDatosFicticios.value = false
     
     const response = await fetch(`${API_BASE}/loans`, {
       method: 'GET',
@@ -253,31 +290,20 @@ const obtenerPrestamos = async () => {
     }
 
     const data = await response.json()
-    prestamos.value = normalizarPrestamos(data)
+    prestamos.value = data
     
   } catch (err) {
     console.error('Error al conectar con el backend:', err)
-    prestamos.value = normalizarPrestamos(datosEstaticos)
+    // Usar datos ficticios
+    prestamos.value = datosEstaticos
+    usandoDatosFicticios.value = true
     error.value = 'No se pudo conectar al servidor. Mostrando datos de ejemplo.'
   } finally {
     loading.value = false
   }
 }
 
-// Normaliza los nombres de campos a camelCase
-const normalizarPrestamos = (prestamosData) => {
-  return prestamosData.map(p => ({
-    id: p.id,
-    clientId: p.clientId || p.client_id,
-    loanAmount: p.loanAmount || p.loan_amount,
-    interestRate: p.interestRate || p.interest_rate,
-    termMonths: p.termMonths || p.term_months,
-    monthlyPayment: p.monthlyPayment || p.monthly_payment,
-    startDate: p.startDate || p.start_date,
-    endDate: p.endDate || p.end_date,
-    status: (p.status || '').toUpperCase()
-  }))
-}
+// QUITAR la función normalizarPrestamos ya que los datos estáticos ya están en el formato correcto
 
 const prestamosFiltrados = computed(() => {
   const filtro = busqueda.value.toLowerCase()
@@ -345,6 +371,26 @@ const modificarPrestamo = async () => {
       status: form.value.status
     }
 
+    // Si estamos usando datos ficticios, no intentar conectar al servidor
+    if (usandoDatosFicticios.value) {
+      // Simular delay de red
+      await new Promise(resolve => setTimeout(resolve, 1000))
+      
+      // Actualizar localmente
+      const index = prestamos.value.findIndex(p => p.id === prestamoSeleccionado.value.id)
+      if (index !== -1) {
+        prestamos.value[index] = {
+          ...prestamos.value[index],
+          ...payload
+        }
+        prestamoSeleccionado.value = prestamos.value[index]
+      }
+      
+      mensaje.value = 'Préstamo actualizado correctamente (modo demostración)'
+      mensajeError.value = false
+      return
+    }
+
     const response = await fetch(`${API_BASE}/loans/${prestamoSeleccionado.value.id}`, {
       method: 'PUT',
       headers: {
@@ -361,7 +407,7 @@ const modificarPrestamo = async () => {
     const updatedPrestamo = await response.json()
     const index = prestamos.value.findIndex(p => p.id === prestamoSeleccionado.value.id)
     if (index !== -1) {
-      prestamos.value[index] = normalizarPrestamo(updatedPrestamo)
+      prestamos.value[index] = updatedPrestamo
     }
 
     mensaje.value = 'Préstamo actualizado correctamente'

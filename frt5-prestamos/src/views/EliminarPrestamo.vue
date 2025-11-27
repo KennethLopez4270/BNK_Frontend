@@ -29,7 +29,8 @@
       <i class="bi bi-exclamation-triangle"></i> {{ error }}
     </div>
 
-    <section v-else class="lista-container animate__animated animate__fadeInUp">
+    <!-- QUITAR el v-else -->
+    <section class="lista-container animate__animated animate__fadeInUp">
       <div v-if="prestamosFiltrados.length" class="lista-prestamos">
         <div 
           v-for="prestamo in prestamosFiltrados" 
@@ -63,7 +64,7 @@
         </div>
       </div>
 
-      <div v-else class="sin-resultados">
+      <div v-else-if="!loading" class="sin-resultados">
         <i class="bi bi-exclamation-circle"></i> No se encontraron préstamos con los filtros aplicados
       </div>
     </section>
@@ -126,7 +127,7 @@ import 'animate.css'
 const router = useRouter()
 const API_BASE = 'http://localhost:8085/api'
 
-// Datos estáticos en formato camelCase
+// Datos estáticos más completos en formato camelCase
 const datosEstaticos = [
   {
     id: 1,
@@ -149,6 +150,39 @@ const datosEstaticos = [
     startDate: '2023-02-15',
     endDate: '2025-02-15',
     status: 'ACTIVO'
+  },
+  {
+    id: 3,
+    clientId: 103,
+    loanAmount: 7500,
+    interestRate: 6.2,
+    termMonths: 18,
+    monthlyPayment: 438.25,
+    startDate: '2023-03-10',
+    endDate: '2024-09-10',
+    status: 'PENDIENTE'
+  },
+  {
+    id: 4,
+    clientId: 104,
+    loanAmount: 15000,
+    interestRate: 8.5,
+    termMonths: 36,
+    monthlyPayment: 473.82,
+    startDate: '2023-01-20',
+    endDate: '2025-12-20',
+    status: 'ACTIVO'
+  },
+  {
+    id: 5,
+    clientId: 105,
+    loanAmount: 3000,
+    interestRate: 4.5,
+    termMonths: 6,
+    monthlyPayment: 507.51,
+    startDate: '2023-04-05',
+    endDate: '2023-10-05',
+    status: 'PAGADO'
   }
 ]
 
@@ -159,6 +193,7 @@ const loading = ref(false)
 const error = ref(null)
 const mensaje = ref('')
 const mensajeError = ref(false)
+const usandoDatosFicticios = ref(false)
 
 onMounted(() => {
   obtenerPrestamos()
@@ -168,6 +203,7 @@ const obtenerPrestamos = async () => {
   try {
     loading.value = true
     error.value = null
+    usandoDatosFicticios.value = false
     
     const response = await fetch(`${API_BASE}/loans`, {
       method: 'GET',
@@ -181,30 +217,17 @@ const obtenerPrestamos = async () => {
     }
 
     const data = await response.json()
-    prestamos.value = normalizarPrestamos(data)
+    prestamos.value = data
     
   } catch (err) {
     console.error('Error al conectar con el backend:', err)
-    prestamos.value = normalizarPrestamos(datosEstaticos)
+    // Usar datos ficticios directamente
+    prestamos.value = datosEstaticos
+    usandoDatosFicticios.value = true
     error.value = 'No se pudo conectar al servidor. Mostrando datos de ejemplo.'
   } finally {
     loading.value = false
   }
-}
-
-// Normaliza los nombres de campos a camelCase
-const normalizarPrestamos = (prestamosData) => {
-  return prestamosData.map(p => ({
-    id: p.id,
-    clientId: p.clientId || p.client_id,
-    loanAmount: p.loanAmount || p.loan_amount,
-    interestRate: p.interestRate || p.interest_rate,
-    termMonths: p.termMonths || p.term_months,
-    monthlyPayment: p.monthlyPayment || p.monthly_payment,
-    startDate: p.startDate || p.start_date,
-    endDate: p.endDate || p.end_date,
-    status: (p.status || '').toUpperCase()
-  }))
 }
 
 const prestamosFiltrados = computed(() => {
@@ -230,6 +253,20 @@ const eliminarPrestamo = async () => {
     loading.value = true
     mensaje.value = ''
     mensajeError.value = false
+
+    // Si estamos usando datos ficticios, no intentar conectar al servidor
+    if (usandoDatosFicticios.value) {
+      // Simular delay de red
+      await new Promise(resolve => setTimeout(resolve, 1000))
+      
+      // Eliminar localmente
+      prestamos.value = prestamos.value.filter(p => p.id !== prestamoSeleccionado.value.id)
+      
+      mensaje.value = 'Préstamo eliminado correctamente (modo demostración)'
+      mensajeError.value = false
+      prestamoSeleccionado.value = null
+      return
+    }
 
     const response = await fetch(`${API_BASE}/loans/${prestamoSeleccionado.value.id}`, {
       method: 'DELETE',
@@ -308,6 +345,7 @@ const formatEstado = (estado) => {
 
 const volver = () => router.push('/')
 </script>
+
 
 <style scoped>
 /* Estilos del componente anterior (los mismos) */
